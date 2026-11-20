@@ -1,0 +1,3095 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DRIFT PARADISE — Неофициальный фан-портал и база знаний (MTA:SA)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@800;900&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dp: {
+              amber: '#F5B82E',
+              amberHover: '#FFC847',
+              dark: '#161616',
+              card: '#1E1E1E',
+              ink: '#141414',
+              pink: '#E62E4D'
+            }
+          },
+          fontFamily: {
+            display: ['"Unbounded"', '"Montserrat"', 'sans-serif'],
+            heavy: ['"Montserrat"', 'sans-serif'],
+            sans: ['"Inter"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html {
+      scroll-behavior: smooth;
+      font-family: 'Inter', sans-serif;
+      background-color: #FFFFFF;
+      color: #141414;
+    }
+
+    /* Тонкая диагональная клетка 45° для темных и светлых секций */
+    .dp-diag-dark {
+      background-color: #161616;
+      background-image:
+        linear-gradient(45deg, rgba(245, 184, 46, 0.06) 1px, transparent 1px),
+        linear-gradient(-45deg, rgba(245, 184, 46, 0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .dp-diag-light {
+      background-color: #FFFFFF;
+      background-image:
+        linear-gradient(45deg, rgba(20, 20, 20, 0.045) 1px, transparent 1px),
+        linear-gradient(-45deg, rgba(20, 20, 20, 0.045) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .dp-stroke-dark {
+      -webkit-text-stroke: 2px rgba(255, 255, 255, 0.06);
+      color: transparent;
+      user-select: none;
+      pointer-events: none;
+      font-family: 'Unbounded', sans-serif;
+      font-weight: 900;
+      line-height: 0.88;
+    }
+
+    .dp-stroke-light {
+      -webkit-text-stroke: 2px rgba(245, 184, 46, 0.35);
+      color: transparent;
+      user-select: none;
+      pointer-events: none;
+      font-family: 'Unbounded', sans-serif;
+      font-weight: 900;
+      line-height: 0.88;
+    }
+
+    /* Фирменный янтарно-желтый стикер с рваными краями */
+    .dp-sticker {
+      position: relative;
+      background: linear-gradient(135deg, #F5B82E 0%, #E09F14 55%, #F5B82E 100%);
+      color: #141414;
+      font-family: 'Unbounded', sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      clip-path: polygon(
+        0% 5%, 14% 0%, 34% 4%, 56% 0%, 78% 4%, 96% 1%, 100% 7%,
+        99% 38%, 100% 70%, 98% 95%, 80% 100%, 58% 96%, 35% 100%, 14% 96%, 2% 99%, 0% 70%
+      );
+      transition: transform 0.16s ease, filter 0.16s ease;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    .dp-sticker:hover {
+      transform: translateY(-2px) rotate(-1deg) scale(1.02);
+      filter: brightness(1.06);
+    }
+
+    .dp-sticker:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    /* Ползунки настроек */
+    input[type="range"].dp-range {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 7px;
+      background: #2E2E2E;
+      border-radius: 6px;
+      outline: none;
+    }
+    input[type="range"].dp-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background: #F5B82E;
+      border: 2px solid #141414;
+      cursor: pointer;
+    }
+    input[type="range"].dp-range::-webkit-slider-thumb:hover {
+      background: #FFD466;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-white text-dp-ink selection:bg-dp-amber selection:text-dp-ink">
+
+  <!-- ==================== ШАПКА САЙТА (HEADER) ==================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-neutral-900">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20 gap-2 sm:gap-4">
+
+        <!-- Пропорциональная навигация во всю доступную ширину до блока профиля и логотипа -->
+        <nav class="flex-1 flex items-center justify-between gap-1.5 sm:gap-2 overflow-x-auto py-1" aria-label="Основная навигация">
+          <button type="button" data-action="switch-tab" data-tab="home" id="nav-home"
+            class="nav-btn flex-1 text-center px-2.5 sm:px-4 py-2.5 rounded-xl font-heavy font-extrabold text-xs sm:text-sm uppercase tracking-wide transition-all whitespace-nowrap cursor-pointer">
+            Главная
+          </button>
+
+          <button type="button" data-action="switch-tab" data-tab="guide" id="nav-guide"
+            class="nav-btn flex-1 text-center px-2.5 sm:px-4 py-2.5 rounded-xl font-heavy font-extrabold text-xs sm:text-sm uppercase tracking-wide transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>Гайд</span>
+            <span class="hidden md:inline-block text-[10px] px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-900 font-black">WIKI</span>
+          </button>
+
+          <button type="button" data-action="switch-tab" data-tab="setups" id="nav-setups"
+            class="nav-btn flex-1 text-center px-2.5 sm:px-4 py-2.5 rounded-xl font-heavy font-extrabold text-xs sm:text-sm uppercase tracking-wide transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>Настройки</span>
+            <span id="approved-count-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-dp-amber text-dp-ink font-black">0</span>
+          </button>
+
+          <button type="button" data-action="switch-tab" data-tab="suggestions" id="nav-suggestions"
+            class="nav-btn flex-1 text-center px-2.5 sm:px-4 py-2.5 rounded-xl font-heavy font-extrabold text-xs sm:text-sm uppercase tracking-wide transition-all whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>Предложить</span>
+            <span id="suggestions-count-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-neutral-900 text-dp-amber font-black">0</span>
+          </button>
+
+          <!-- Кнопка «Модерация» скрыта для гостей/игроков и появляется ТОЛЬКО для стаффа -->
+          <button type="button" data-action="switch-tab" data-tab="moderation" id="nav-moderation"
+            class="hidden flex-1 text-center px-3 py-2.5 rounded-xl bg-dp-amber text-dp-ink border-2 border-neutral-900 font-display font-black text-[11px] sm:text-xs uppercase tracking-wider items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer shadow-[3px_3px_0px_#141414]">
+            <span>Модерация</span>
+            <span id="pending-count-badge" class="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded bg-dp-ink text-dp-amber text-[11px] font-black">0</span>
+          </button>
+        </nav>
+
+        <!-- Правый блок: Индикатор LIVE + Профиль игрока/стаффа + Логотип DRIFT PARADISE -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <!-- Индикатор синхронизации в реальном времени -->
+          <div id="live-status-pill" title="Синхронизация в реальном времени"
+            class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-neutral-300 bg-neutral-100 text-[10px] font-black uppercase tracking-wider text-neutral-700">
+            <span id="live-status-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span id="live-status-text">SYNC</span>
+          </div>
+
+          <!-- Блок профиля игрока или стаффа -->
+          <div id="header-user-slot" class="flex items-center"></div>
+
+          <!-- Фирменный логотип DRIFT PARADISE в правом верхнем углу -->
+          <a href="#top" data-action="switch-tab" data-tab="home" class="flex items-center shrink-0 group select-none" aria-label="Drift Paradise На главную">
+            <div class="flex items-stretch border-[3px] border-[#141414] bg-[#141414] shadow-sm transition-transform duration-200 group-hover:scale-[1.02]">
+              <div class="w-10 h-10 sm:w-11 sm:h-11 bg-[#F5B82E] flex items-center justify-center p-1.5 shrink-0">
+                <svg viewBox="0 0 40 40" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="2" width="36" height="36" rx="4" stroke="#141414" stroke-width="3.5"/>
+                  <path d="M11 26C11 19 16 17 20 20C24 23 29 21 29 14" stroke="#141414" stroke-width="4.2" stroke-linecap="round"/>
+                  <path d="M11 15C11 11.5 14 10 17.5 11.5" stroke="#141414" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M22.5 28.5C26 30 29 28.5 29 25" stroke="#141414" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="flex flex-col justify-center leading-none">
+                <div class="bg-white px-2 py-0.5">
+                  <span class="font-display font-black text-[#141414] text-[12px] sm:text-[14px] tracking-tight leading-none block">DRIFT</span>
+                </div>
+                <div class="bg-[#141414] px-2 py-0.5">
+                  <span class="font-display font-black text-white text-[12px] sm:text-[14px] tracking-tight leading-none block">PARADISE</span>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== ОСНОВНОЙ КОНТЕЙНЕР SPA ==================== -->
+  <main class="flex-1">
+
+    <!-- ================================================================ -->
+    <!-- ВКЛАДКА 1: ГЛАВНАЯ (НЕОФИЦИАЛЬНЫЙ ФАН-ПОРТАЛ + СКРИНШОТЫ .PNG)    -->
+    <!-- ================================================================ -->
+    <section id="tab-home" class="tab-section">
+      <!-- Рваный бумажный переход из белой шапки в темный угольный фон -->
+      <div class="relative bg-white pt-1">
+        <svg class="w-full h-7 sm:h-10 block text-[#161616]" viewBox="0 0 1440 48" preserveAspectRatio="none">
+          <path fill="currentColor" d="M0,30 L42,21 L92,33 L148,17 L208,28 L272,13 L338,26 L408,11 L482,25 L558,15 L634,30 L708,14 L788,27 L864,13 L944,29 L1024,16 L1104,27 L1184,12 L1264,26 L1344,15 L1440,25 L1440,48 L0,48 Z"/>
+        </svg>
+      </div>
+
+      <!-- БЛОК 1: HERO (ТЕМНЫЙ УГОЛЬНЫЙ С ДИАГОНАЛЬНОЙ КЛЕТКОЙ 45°) -->
+      <div class="relative dp-diag-dark text-white overflow-hidden pb-16 sm:pb-24 pt-6 sm:pt-12">
+        <div class="absolute inset-x-0 top-3 sm:top-5 flex justify-center overflow-hidden pointer-events-none select-none">
+          <span class="dp-stroke-dark text-[68px] sm:text-[140px] lg:text-[195px] uppercase whitespace-nowrap">
+            FAN PORTAL
+          </span>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+
+            <!-- Левая текстовая колонка -->
+            <div class="lg:col-span-6 space-y-6">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-dp-amber/15 border border-dp-amber/40 text-dp-amber text-[11px] font-black uppercase tracking-wider">
+                <span>★</span>
+                <span>Неофициальный фан-портал • Инициатива игроков</span>
+              </div>
+
+              <div>
+                <p class="font-display font-black text-neutral-300 text-sm sm:text-lg uppercase tracking-wide mb-1.5">
+                  БАЗА ЗНАНИЙ КОМЬЮНИТИ
+                </p>
+                <h1 class="font-display font-black text-dp-amber text-4xl sm:text-6xl lg:text-[62px] uppercase leading-[0.92] tracking-tight">
+                  DRIFT<br/>PARADISE
+                </h1>
+              </div>
+
+              <p class="text-neutral-200 text-sm sm:text-base max-w-xl leading-relaxed font-medium">
+                Независимый справочник и база конфигураций дрифт-модуля, созданная игроками для игроков сервера <strong>Drift Paradise (MTA:SA)</strong>. Изучайте гайды для комфортного старта, делитесь проверенными настройками шасси и предлагайте идеи для развития портала.
+              </p>
+
+              <div class="flex flex-wrap items-center gap-4 pt-2">
+                <button type="button" data-action="switch-tab" data-tab="guide"
+                  class="dp-sticker px-8 py-4 text-xs sm:text-sm -rotate-1 cursor-pointer">
+                  ОТКРЫТЬ ГАЙД (WIKI)
+                </button>
+
+                <button type="button" data-action="switch-tab" data-tab="setups"
+                  class="px-6 py-4 rounded-xl border-2 border-white/25 bg-white/5 hover:bg-white/10 font-display font-black text-xs sm:text-sm uppercase text-white transition-colors cursor-pointer">
+                  БАЗА НАСТРОЕК
+                </button>
+              </div>
+            </div>
+
+            <!-- Правая колонка: Скриншот 1 (image_5ac302.png) с редактируемой подписью -->
+            <div class="lg:col-span-6 relative">
+              <div class="relative rounded-2xl overflow-hidden border-2 border-white/20 bg-[#1E1E1E] shadow-2xl group">
+                <img id="home-img-1" src="image_5ac302.png" alt="Drift Paradise Командный дрифт"
+                  class="w-full h-64 sm:h-80 object-cover block" />
+
+                <!-- Заглушка, если локальный файл не найден и не загружен кастомный -->
+                <div id="home-placeholder-1" class="hidden w-full h-64 sm:h-80 dp-diag-dark flex flex-col items-center justify-center p-6 text-center border-b border-white/10">
+                  <span class="px-3 py-1 rounded bg-dp-amber text-dp-ink font-display font-black text-[10px] uppercase mb-2">СЛОТ ФОТО #1</span>
+                  <p class="font-display font-black text-sm uppercase text-white">image_5ac302.png</p>
+                  <p class="text-xs text-neutral-400 mt-1 max-w-xs">Положите файл image_5ac302.png в корень репозитория или загрузите фото через кнопку администратора.</p>
+                </div>
+
+                <!-- Плашка с редактируемой подписью -->
+                <div class="px-5 py-3.5 bg-[#141414]/95 border-t border-white/15 flex items-center justify-between gap-3">
+                  <div>
+                    <span id="home-tag-1" class="block text-[10px] font-black uppercase tracking-widest text-dp-amber">TSUISO / КОМАНДНЫЙ ДРИФТ</span>
+                    <p id="home-caption-1" class="font-display font-bold text-xs sm:text-sm text-white mt-0.5">Синхронный занос в связке на горном перевале</p>
+                  </div>
+                  <span class="px-2.5 py-1 rounded bg-white/10 text-[10px] font-black text-neutral-300 uppercase shrink-0">MTA:SA</span>
+                </div>
+
+                <!-- Кнопки управления фото и подписью (только для owner / admin) -->
+                <div id="home-admin-controls-1" class="hidden absolute top-3 right-3 flex flex-wrap gap-1.5 z-20"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Рваный переход из темного блока в светлый блок -->
+      <div class="relative bg-[#161616]">
+        <svg class="w-full h-7 sm:h-10 block text-white" viewBox="0 0 1440 48" preserveAspectRatio="none">
+          <path fill="currentColor" d="M0,22 L58,34 L122,16 L194,30 L268,14 L344,28 L420,12 L498,29 L576,15 L654,31 L732,14 L812,28 L890,13 L970,30 L1050,16 L1130,29 L1210,13 L1290,27 L1370,15 L1440,26 L1440,48 L0,48 Z"/>
+        </svg>
+      </div>
+
+      <!-- БЛОК 2: СВЕТЛЫЙ БЛОК С ДИАГОНАЛЬНОЙ КЛЕТКОЙ + СКРИНШОТ 2 (image_5ac5ae.png) -->
+      <div class="relative dp-diag-light text-dp-ink py-16 sm:py-24 overflow-hidden">
+        <div class="absolute inset-x-0 top-5 flex justify-center overflow-hidden pointer-events-none select-none">
+          <span class="dp-stroke-light text-[68px] sm:text-[140px] lg:text-[190px] uppercase whitespace-nowrap">
+            COMMUNITY
+          </span>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+
+            <!-- Левая колонка: Скриншот 2 (image_5ac5ae.png) с редактируемой подписью -->
+            <div class="lg:col-span-6 order-2 lg:order-1">
+              <div class="relative rounded-2xl overflow-hidden border-2 border-neutral-900 bg-[#1E1E1E] shadow-[8px_8px_0px_#141414] group">
+                <img id="home-img-2" src="image_5ac5ae.png" alt="Drift Paradise Парные заезды"
+                  class="w-full h-64 sm:h-80 object-cover block" />
+
+                <div id="home-placeholder-2" class="hidden w-full h-64 sm:h-80 dp-diag-dark flex flex-col items-center justify-center p-6 text-center text-white">
+                  <span class="px-3 py-1 rounded bg-dp-amber text-dp-ink font-display font-black text-[10px] uppercase mb-2">СЛОТ ФОТО #2</span>
+                  <p class="font-display font-black text-sm uppercase">image_5ac5ae.png</p>
+                  <p class="text-xs text-neutral-400 mt-1 max-w-xs">Положите файл image_5ac5ae.png в корень репозитория или загрузите фото через кнопку администратора.</p>
+                </div>
+
+                <div class="px-5 py-3.5 bg-[#141414] text-white border-t-2 border-neutral-900 flex items-center justify-between gap-3">
+                  <div>
+                    <span id="home-tag-2" class="block text-[10px] font-black uppercase tracking-widest text-dp-amber">ПАРНЫЕ ЗАЕЗДЫ • ТОГЕ</span>
+                    <p id="home-caption-2" class="font-display font-bold text-xs sm:text-sm text-white mt-0.5">Близкий прессинг в дуге на горных серпантинах</p>
+                  </div>
+                  <span class="px-2.5 py-1 rounded bg-dp-amber text-dp-ink text-[10px] font-black uppercase shrink-0">SETUPS</span>
+                </div>
+
+                <!-- Кнопки управления фото и подписью (только для owner / admin) -->
+                <div id="home-admin-controls-2" class="hidden absolute top-3 right-3 flex flex-wrap gap-1.5 z-20"></div>
+              </div>
+            </div>
+
+            <!-- Правая текстовая колонка -->
+            <div class="lg:col-span-6 space-y-5 order-1 lg:order-2">
+              <div class="inline-block px-3 py-1 rounded bg-neutral-900 text-dp-amber text-xs font-black uppercase tracking-wider">
+                О фанатском проекте
+              </div>
+              <h2 class="font-display font-black text-3xl sm:text-5xl text-dp-ink uppercase leading-[0.95]">
+                ЗАЧЕМ СОЗДАН<br/>ЭТОТ ПОРТАЛ
+              </h2>
+              <p class="text-neutral-700 text-sm sm:text-base leading-relaxed font-medium">
+                На сервере Drift Paradise огромное внимание уделено тонкой настройке дрифт-модуля, горным перевалом (тоге) и парным заездам. Этот сайт создан как личная инициатива игрока, чтобы собрать в одном месте понятную энциклопедию для новичков и удобный каталог проверенных сетапов от комьюнити.
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div data-action="switch-tab" data-tab="guide"
+                  class="cursor-pointer rounded-2xl border-2 border-neutral-900 bg-white p-5 shadow-[5px_5px_0px_#141414] hover:-translate-y-1 transition-transform">
+                  <span class="inline-block px-2.5 py-0.5 rounded bg-dp-amber text-dp-ink font-display font-black text-[10px] uppercase mb-2.5">01 • WIKI</span>
+                  <h3 class="font-display font-black text-base uppercase mb-1">База знаний</h3>
+                  <p class="text-xs text-neutral-600 leading-relaxed">Пошаговые советы по старту, трассам, экономике и дрифт-модулю.</p>
+                </div>
+
+                <div data-action="switch-tab" data-tab="setups"
+                  class="cursor-pointer rounded-2xl border-2 border-neutral-900 bg-white p-5 shadow-[5px_5px_0px_#F5B82E] hover:-translate-y-1 transition-transform">
+                  <span class="inline-block px-2.5 py-0.5 rounded bg-neutral-900 text-dp-amber font-display font-black text-[10px] uppercase mb-2.5">02 • SETUPS</span>
+                  <h3 class="font-display font-black text-base uppercase mb-1">Настройки комьюнити</h3>
+                  <p class="text-xs text-neutral-600 leading-relaxed">10 точных параметров дрифт-модуля со скриншотами и премодерацией.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Рваный переход в темный блок 3 -->
+      <div class="relative bg-white">
+        <svg class="w-full h-7 sm:h-10 block text-[#161616]" viewBox="0 0 1440 48" preserveAspectRatio="none">
+          <path fill="currentColor" d="M0,26 L68,14 L138,31 L212,16 L288,29 L364,13 L442,27 L520,12 L600,28 L678,15 L758,30 L838,14 L918,27 L998,13 L1078,29 L1158,15 L1238,28 L1318,14 L1390,26 L1440,18 L1440,48 L0,48 Z"/>
+        </svg>
+      </div>
+
+      <!-- БЛОК 3: ТЕМНЫЙ ФИНАЛЬНЫЙ БЛОК ПРИЗЫВА К ДЕЙСТВИЮ -->
+      <div class="relative dp-diag-dark text-white py-16 sm:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div class="space-y-3 max-w-2xl">
+            <span class="inline-block px-3 py-1 rounded bg-dp-amber text-dp-ink font-display font-black text-[11px] uppercase">
+              Вклад в комьюнити
+            </span>
+            <h2 class="font-display font-black text-2xl sm:text-4xl uppercase leading-tight">
+              ЕСТЬ СВОЙ СЕТАП ИЛИ ИДЕЯ ДЛЯ САЙТА?
+            </h2>
+            <p class="text-neutral-300 text-sm sm:text-base leading-relaxed">
+              Загрузите параметры своего дрифт-модуля со скриншотом или предложите новую тему для статьи в разделе «Предложить». После проверки модератором материалы станут доступны всем игрокам.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-3 shrink-0">
+            <button type="button" data-action="switch-tab" data-tab="setups" class="dp-sticker px-7 py-4 text-xs sm:text-sm cursor-pointer">
+              КАТАЛОГ НАСТРОЕК
+            </button>
+            <button type="button" data-action="switch-tab" data-tab="suggestions"
+              class="px-6 py-4 rounded-xl border-2 border-white/25 bg-white/5 hover:bg-white/10 font-display font-black text-xs sm:text-sm uppercase text-white transition-colors cursor-pointer">
+              ПРЕДЛОЖИТЬ ИДЕЮ
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- ВКЛАДКА 2: ГАЙД (WIKI ПРОЕКТА)                                   -->
+    <!-- ================================================================ -->
+    <section id="tab-guide" class="tab-section hidden">
+      <div class="relative dp-diag-dark text-white py-12 sm:py-16 overflow-hidden">
+        <div class="absolute inset-x-0 top-2 flex justify-center pointer-events-none">
+          <span class="dp-stroke-dark text-[70px] sm:text-[135px] uppercase whitespace-nowrap">DRIFT WIKI</span>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div class="inline-block px-3 py-1 rounded bg-dp-amber text-dp-ink text-xs font-black uppercase tracking-wider mb-3">
+              Энциклопедия игроков
+            </div>
+            <h1 class="font-display font-black text-3xl sm:text-5xl text-white uppercase leading-[0.95]">
+              ГАЙД ПО<br/>DRIFT PARADISE
+            </h1>
+          </div>
+          <div id="wiki-staff-actions" class="flex flex-wrap items-center gap-3"></div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+        <div class="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
+          <div id="wiki-articles-list" class="w-full lg:w-[68%] space-y-8 order-2 lg:order-1"></div>
+
+          <aside class="w-full lg:w-[32%] lg:sticky lg:top-24 order-1 lg:order-2">
+            <div class="rounded-2xl border-2 border-neutral-900 bg-white p-5 shadow-[6px_6px_0px_#141414]">
+              <div class="flex items-center justify-between border-b-2 border-neutral-900 pb-3 mb-4">
+                <h2 class="font-display font-black text-xs sm:text-sm uppercase tracking-wide text-dp-ink">
+                  БЫСТРЫЙ ВЫБОР РАЗДЕЛОВ
+                </h2>
+                <span class="w-2.5 h-2.5 rounded-full bg-dp-amber"></span>
+              </div>
+
+              <div class="mb-4">
+                <input type="text" id="wiki-search-input" placeholder="Поиск по статьям..."
+                  class="w-full px-3.5 py-2.5 text-sm rounded-xl border-2 border-neutral-200 focus:border-dp-ink focus:outline-none transition-colors" />
+              </div>
+
+              <nav id="wiki-toc-nav" class="space-y-1.5" aria-label="Оглавление Wiki"></nav>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- ВКЛАДКА 3: НАСТРОЙКИ ДРИФТ-МОДУЛЯ (10 ПАРАМЕТРОВ)                -->
+    <!-- ================================================================ -->
+    <section id="tab-setups" class="tab-section hidden">
+      <div class="relative dp-diag-dark text-white py-12 sm:py-16 overflow-hidden">
+        <div class="absolute inset-x-0 top-2 flex justify-center pointer-events-none">
+          <span class="dp-stroke-dark text-[64px] sm:text-[135px] uppercase whitespace-nowrap">DRIFT SETUPS</span>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div class="inline-block px-3 py-1 rounded bg-dp-amber text-dp-ink text-xs font-black uppercase tracking-wider mb-3">
+              База конфигураций комьюнити
+            </div>
+            <h1 class="font-display font-black text-3xl sm:text-5xl text-white uppercase leading-[0.95]">
+              НАСТРОЙКИ<br/>ДРИФТ-МОДУЛЯ
+            </h1>
+          </div>
+          <div>
+            <button type="button" data-action="open-setup-modal" class="dp-sticker px-6 py-3.5 text-xs sm:text-sm cursor-pointer">
+              + ОПУБЛИКОВАТЬ НАСТРОЙКУ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="rounded-2xl border-2 border-neutral-900 bg-neutral-50 p-4 sm:p-5 mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+          <div class="flex flex-wrap items-center gap-3 flex-1">
+            <div class="flex-1 min-w-[200px]">
+              <label class="block text-[11px] font-black uppercase text-neutral-500 mb-1">Поиск по автомобилю или автору</label>
+              <input type="text" id="setup-search-input" placeholder="Например: Silvia S15, Chaser, Mark II..."
+                class="w-full px-3.5 py-2 rounded-xl border-2 border-neutral-300 bg-white text-sm font-medium focus:border-dp-ink focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-black uppercase text-neutral-500 mb-1">Стиль езды</label>
+              <select id="setup-style-filter"
+                class="px-3.5 py-2 rounded-xl border-2 border-neutral-300 bg-white text-sm font-bold focus:border-dp-ink focus:outline-none">
+                <option value="ALL">Все стили</option>
+                <option value="Тоге / Горные перевалы">Тоге / Горные перевалы</option>
+                <option value="Уличный дрифт">Уличный дрифт</option>
+                <option value="Парный / Тандем">Парный / Тандем</option>
+                <option value="360 / Стайл">360 / Стайл</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <span class="text-xs font-bold text-neutral-500">Одобрено в каталоге:</span>
+            <div id="setups-visible-count" class="font-display font-black text-2xl text-dp-ink">0</div>
+          </div>
+        </div>
+
+        <div id="setups-catalog-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-7"></div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- ВКЛАДКА 4: ПРЕДЛОЖИТЬ (С ПРЕМОДЕРАЦИЕЙ И ЗАЩИТОЙ ОТ ЗАПРЕТОК)    -->
+    <!-- ================================================================ -->
+    <section id="tab-suggestions" class="tab-section hidden">
+      <div class="relative dp-diag-dark text-white py-12 sm:py-16 overflow-hidden">
+        <div class="absolute inset-x-0 top-2 flex justify-center pointer-events-none">
+          <span class="dp-stroke-dark text-[64px] sm:text-[135px] uppercase whitespace-nowrap">COMMUNITY IDEAS</span>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="inline-block px-3 py-1 rounded bg-dp-amber text-dp-ink text-xs font-black uppercase tracking-wider mb-3">
+            Идеи и предложения
+          </div>
+          <h1 class="font-display font-black text-3xl sm:text-5xl text-white uppercase leading-[0.95]">
+            ПРЕДЛОЖИТЬ<br/>УЛУЧШЕНИЕ
+          </h1>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+          <!-- Форма отправки предложения -->
+          <div class="lg:col-span-5">
+            <div class="rounded-2xl border-2 border-neutral-900 bg-white p-6 shadow-[6px_6px_0px_#141414]">
+              <h2 class="font-display font-black text-xl uppercase text-dp-ink mb-1">ОТПРАВИТЬ ИДЕЮ</h2>
+              <p class="text-xs text-neutral-500 mb-5">
+                Все предложения проходят премодерацию перед публикацией в общем списке, чтобы исключить спам и запрещённые выражения.
+              </p>
+
+              <form id="suggestion-submit-form" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Ваш логин / никнейм *</label>
+                  <input type="text" id="sug-input-author" required placeholder="Ваш игровой ник..."
+                    class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none" />
+                </div>
+
+                <div>
+                  <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Заголовок *</label>
+                  <input type="text" id="sug-input-title" required placeholder="Кратко о сути предложения..."
+                    class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none" />
+                </div>
+
+                <div>
+                  <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Подробное описание *</label>
+                  <textarea id="sug-input-desc" rows="4" required placeholder="Опишите идею или тему для статьи..."
+                    class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm leading-relaxed focus:border-dp-ink focus:outline-none"></textarea>
+                </div>
+
+                <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">
+                  ОТПРАВИТЬ НА МОДЕРАЦИЮ
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Список предложений -->
+          <div class="lg:col-span-7 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-neutral-100 p-3.5 rounded-xl border-2 border-neutral-900">
+              <span class="font-display font-black text-xs uppercase text-dp-ink">Фильтр статуса:</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" data-action="filter-sug" data-status="ALL"
+                  class="sug-status-tab px-3 py-1.5 rounded-lg text-xs font-black uppercase bg-dp-ink text-white cursor-pointer">Все</button>
+                <button type="button" data-action="filter-sug" data-status="unprocessed"
+                  class="sug-status-tab px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-white text-neutral-700 hover:bg-neutral-200 cursor-pointer">Не обработано</button>
+                <button type="button" data-action="filter-sug" data-status="planned"
+                  class="sug-status-tab px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-white text-neutral-700 hover:bg-neutral-200 cursor-pointer">Будет сделано</button>
+                <button type="button" data-action="filter-sug" data-status="done"
+                  class="sug-status-tab px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-white text-neutral-700 hover:bg-neutral-200 cursor-pointer">Сделано</button>
+              </div>
+            </div>
+
+            <div id="suggestions-cards-container" class="space-y-4"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================ -->
+    <!-- ВКЛАДКА 5: ЗАКРЫТАЯ ПАНЕЛЬ СТАФФА                                -->
+    <!-- ================================================================ -->
+    <section id="tab-moderation" class="tab-section hidden">
+      <div class="relative dp-diag-dark text-white py-12 sm:py-16 overflow-hidden">
+        <div class="absolute inset-x-0 top-2 flex justify-center pointer-events-none">
+          <span class="dp-stroke-dark text-[64px] sm:text-[135px] uppercase whitespace-nowrap">STAFF PANEL</span>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="inline-block px-3 py-1 rounded bg-dp-amber text-dp-ink text-xs font-black uppercase tracking-wider mb-3">
+            Закрытый раздел управления
+          </div>
+          <h1 class="font-display font-black text-3xl sm:text-5xl text-white uppercase leading-[0.95]">
+            МОДЕРАЦИЯ И<br/>БЕЗОПАСНОСТЬ
+          </h1>
+        </div>
+      </div>
+
+      <div id="moderation-panel-root" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10"></div>
+    </section>
+
+  </main>
+
+  <!-- ==================== ПОДВАЛ САЙТА (FOOTER) ==================== -->
+  <footer class="bg-[#141414] text-neutral-400 border-t-2 border-neutral-900 mt-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="space-y-1 text-center sm:text-left">
+        <div class="flex items-center justify-center sm:justify-start gap-2.5">
+          <span class="font-display font-black text-white text-sm tracking-wider">DRIFT PARADISE</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-dp-amber text-dp-ink font-black uppercase">FAN PORTAL</span>
+        </div>
+        <p class="text-xs text-neutral-500">
+          Неофициальный фан-портал и база знаний комьюнити Drift Paradise (MTA:SA). Создан по инициативе игроков, не является официальным ресурсом проекта.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 shrink-0">
+        <div id="footer-auth-slot"></div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== МОДАЛЬНОЕ ОКНО: АВТОРИЗАЦИЯ / РЕГИСТРАЦИЯ ИГРОКА (ПО ЛОГИНУ) ==================== -->
+  <div id="player-auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl border-2 border-neutral-900 max-w-md w-full p-6 sm:p-8 shadow-2xl my-8">
+      <div class="flex items-start justify-between gap-4 border-b-2 border-neutral-900 pb-3 mb-5">
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded bg-dp-amber text-dp-ink text-[10px] font-black uppercase mb-1">
+            Аккаунт игрока
+          </span>
+          <h2 class="font-display font-black text-xl uppercase text-dp-ink">ВХОД ИЛИ РЕГИСТРАЦИЯ</h2>
+        </div>
+        <button type="button" data-action="close-player-auth" class="w-9 h-9 rounded-lg bg-neutral-100 hover:bg-neutral-200 font-black cursor-pointer">✕</button>
+      </div>
+
+      <div class="flex gap-1.5 mb-5 bg-neutral-100 p-1 rounded-xl">
+        <button type="button" data-action="player-auth-tab" data-mode="login" id="pauth-tab-login"
+          class="flex-1 py-2 rounded-lg text-xs font-black uppercase bg-dp-ink text-white cursor-pointer">Вход</button>
+        <button type="button" data-action="player-auth-tab" data-mode="register" id="pauth-tab-register"
+          class="flex-1 py-2 rounded-lg text-xs font-bold uppercase text-neutral-600 cursor-pointer">Регистрация</button>
+        <button type="button" data-action="player-auth-tab" data-mode="reset" id="pauth-tab-reset"
+          class="flex-1 py-2 rounded-lg text-xs font-bold uppercase text-neutral-600 cursor-pointer">Сброс</button>
+      </div>
+
+      <div id="player-auth-body"></div>
+    </div>
+  </div>
+
+  <!-- ==================== МОДАЛЬНОЕ ОКНО: ВХОД СТАФФА / ПРИВЯЗКА ВЛАДЕЛЬЦА + 2FA ==================== -->
+  <div id="staff-auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl border-2 border-neutral-900 max-w-md w-full p-6 sm:p-8 shadow-2xl my-8">
+      <div class="flex items-start justify-between gap-4 border-b-2 border-neutral-900 pb-3 mb-5">
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded bg-dp-ink text-dp-amber text-[10px] font-black uppercase mb-1">
+            Staff Access • Login + 2FA TOTP
+          </span>
+          <h2 id="staff-modal-heading" class="font-display font-black text-xl uppercase text-dp-ink">ВХОД ДЛЯ ПЕРСОНАЛА</h2>
+        </div>
+        <button type="button" data-action="close-staff-auth" class="w-9 h-9 rounded-lg bg-neutral-100 hover:bg-neutral-200 font-black cursor-pointer">✕</button>
+      </div>
+
+      <div id="staff-auth-body"></div>
+    </div>
+  </div>
+
+  <!-- ==================== МОДАЛЬНОЕ ОКНО: ПУБЛИКАЦИЯ НАСТРОЙКИ (10 ПАРАМЕТРОВ) ==================== -->
+  <div id="setup-submit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl border-2 border-neutral-900 max-w-3xl w-full p-6 sm:p-8 shadow-2xl my-8 relative max-h-[92vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 border-b-2 border-neutral-900 pb-4 mb-6">
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded bg-dp-amber text-dp-ink text-[11px] font-black uppercase mb-1">
+            Проверка модераторами
+          </span>
+          <h2 class="font-display font-black text-2xl uppercase text-dp-ink">ОПУБЛИКОВАТЬ НАСТРОЙКУ</h2>
+        </div>
+        <button type="button" data-action="close-setup-modal" class="w-9 h-9 rounded-lg bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center font-black text-lg cursor-pointer">✕</button>
+      </div>
+
+      <form id="setup-submit-form" class="space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Название автомобиля *</label>
+            <input type="text" id="setup-car-input" required placeholder="Например: Nissan Silvia S15"
+              class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Стиль дрифта *</label>
+            <select id="setup-style-input" required
+              class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none">
+              <option value="Тоге / Горные перевалы">Тоге / Горные перевалы</option>
+              <option value="Уличный дрифт">Уличный дрифт</option>
+              <option value="Парный / Тандем">Парный / Тандем</option>
+              <option value="360 / Стайл">360 / Стайл</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Автор (никнейм / логин) *</label>
+            <input type="text" id="setup-author-input" required placeholder="Ваш игровой никнейм"
+              class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Комментарий</label>
+            <input type="text" id="setup-comment-input" placeholder="Особенности поведения авто..."
+              class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-medium focus:border-dp-ink focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- 10 параметров дрифт-модуля -->
+        <div class="rounded-xl bg-[#161616] text-white p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+            <span class="font-display font-black text-xs uppercase text-dp-amber">Параметры дрифт-модуля (10 характеристик)</span>
+            <span class="text-[11px] text-neutral-400">Ползунок или ручной ввод с проверкой диапазона</span>
+          </div>
+          <div id="setup-params-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5"></div>
+        </div>
+
+        <!-- Загрузка скриншота -->
+        <div class="space-y-3 rounded-xl border-2 border-neutral-200 p-4 bg-neutral-50">
+          <label class="block text-xs font-black uppercase text-neutral-700">Скриншот машины и настроек *</label>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+            <label class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-neutral-400 hover:border-dp-amber bg-white cursor-pointer text-xs font-bold text-neutral-800 transition-colors">
+              <span>📁 Выбрать файл с ПК (PNG/JPG)</span>
+              <input type="file" id="setup-file-input" accept="image/*" class="hidden" />
+            </label>
+
+            <input type="url" id="setup-url-input" placeholder="Или вставьте прямую ссылку https://..."
+              class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 bg-white text-xs font-medium focus:border-dp-ink focus:outline-none" />
+          </div>
+
+          <div id="setup-screenshot-preview-wrap" class="hidden rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-900">
+            <img id="setup-screenshot-preview" src="" alt="Предпросмотр скриншота" class="w-full h-44 object-cover" />
+            <div id="setup-screenshot-caption" class="px-3 py-1.5 bg-neutral-900 text-neutral-300 text-[11px] font-semibold"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" data-action="close-setup-modal" class="px-5 py-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-xs font-bold uppercase cursor-pointer">
+            Отмена
+          </button>
+          <button type="submit" class="dp-sticker px-7 py-3.5 text-xs sm:text-sm cursor-pointer">
+            ОТПРАВИТЬ НА ПРОВЕРКУ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ ПОДПИСИ ФОТО НА ГЛАВНОЙ ==================== -->
+  <div id="home-caption-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl border-2 border-neutral-900 max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b-2 border-neutral-900 pb-3 mb-4">
+        <h2 id="home-caption-modal-title" class="font-display font-black text-lg uppercase">РЕДАКТИРОВАТЬ ПОДПИСЬ</h2>
+        <button type="button" data-action="close-caption-modal" class="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 font-black cursor-pointer">✕</button>
+      </div>
+      <form id="home-caption-form" class="space-y-4">
+        <input type="hidden" id="home-caption-slot" value="1" />
+        <div>
+          <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Верхний тег (маленький заголовок)</label>
+          <input type="text" id="home-caption-tag-input" required
+            class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Основная подпись под картинкой</label>
+          <input type="text" id="home-caption-text-input" required
+            class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" data-action="close-caption-modal" class="px-4 py-2.5 rounded-xl bg-neutral-100 text-xs font-bold uppercase cursor-pointer">Отмена</button>
+          <button type="submit" class="dp-sticker px-6 py-2.5 text-xs cursor-pointer">СОХРАНИТЬ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== МОДАЛЬНОЕ ОКНО: РЕДАКТОР WIKI ==================== -->
+  <div id="wiki-editor-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl border-2 border-neutral-900 max-w-xl w-full p-6 sm:p-8 shadow-2xl">
+      <div class="flex items-center justify-between border-b-2 border-neutral-900 pb-3 mb-5">
+        <h2 id="wiki-editor-title" class="font-display font-black text-xl uppercase">ДОБАВИТЬ СТАТЬЮ В ГАЙД</h2>
+        <button type="button" data-action="close-wiki-editor" class="w-9 h-9 rounded-lg bg-neutral-100 hover:bg-neutral-200 font-black cursor-pointer">✕</button>
+      </div>
+
+      <form id="wiki-editor-form" class="space-y-4">
+        <input type="hidden" id="wiki-editor-id" value="" />
+        <div>
+          <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Заголовок раздела *</label>
+          <input type="text" id="wiki-editor-heading" required placeholder="Например: Как начать играть"
+            class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Категория / Тег</label>
+          <input type="text" id="wiki-editor-tag" placeholder="Например: СТАРТ / НОВИЧКАМ"
+            class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-semibold focus:border-dp-ink focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Текст статьи *</label>
+          <textarea id="wiki-editor-content" rows="7" required placeholder="Подробное описание..."
+            class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm leading-relaxed focus:border-dp-ink focus:outline-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" data-action="close-wiki-editor" class="px-4 py-2.5 rounded-xl bg-neutral-100 text-xs font-bold uppercase cursor-pointer">Отмена</button>
+          <button type="submit" class="dp-sticker px-6 py-3 text-xs cursor-pointer">СОХРАНИТЬ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== МОДАЛЬНОЕ ОКНО: LIGHTBOX СКРИНШОТА ==================== -->
+  <div id="lightbox-overlay" data-action="close-lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4 cursor-zoom-out">
+    <div class="max-w-4xl w-full bg-[#161616] rounded-2xl overflow-hidden border border-white/20 shadow-2xl cursor-default" data-stop-prop="true">
+      <div class="flex items-center justify-between px-5 py-3 bg-black/60 text-white">
+        <span id="lightbox-title" class="font-display font-black text-xs sm:text-sm uppercase">Просмотр скриншота</span>
+        <button type="button" data-action="close-lightbox" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20 text-xs font-bold cursor-pointer">Закрыть ✕</button>
+      </div>
+      <div class="p-2 flex justify-center bg-black">
+        <img id="lightbox-image" src="" alt="Скриншот настройки" class="max-h-[78vh] w-auto object-contain rounded-lg" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрытые input[type=file] для загрузки фото 1 и 2 на главной странице -->
+  <input type="file" id="home-upload-1" accept="image/*" class="hidden" />
+  <input type="file" id="home-upload-2" accept="image/*" class="hidden" />
+
+  <!-- ==================== УВЕДОМЛЕНИЯ (TOAST) ==================== -->
+  <div id="toast-stack" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==================== JAVASCRIPT: SUPABASE REALTIME + LOGIN AUTH + 2FA TOTP ==================== -->
+  <script>
+    (function() {
+      'use strict';
+
+      // Публичные клиентские параметры Supabase (без секретных ключей)
+      const SUPABASE_URL = 'https://aluveuzrysooaeecrjls.supabase.co';
+      const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_psjdHHXFZPVM_FA23bMpcA_BXJq8p-4';
+
+      const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+
+      // 10 точных параметров дрифт-модуля и их допустимые диапазоны
+      const DRIFT_PARAMETERS = [
+        { key: 'suspensionStiffness', label: 'Жесткость подвески', min: 0.1, max: 1.5, step: 0.01, def: 1.0, rangeLabel: '0.1 — 1.5' },
+        { key: 'steeringReturn', label: 'Резкость возвращения руля', min: 1.0, max: 5.0, step: 0.1, def: 2.5, rangeLabel: '1.0 — 5.0' },
+        { key: 'steeringSmoothness', label: 'Плавность руления', min: 0.1, max: 1.0, step: 0.05, def: 0.5, rangeLabel: '0.1 — 1.0' },
+        { key: 'maxSteeringLock', label: 'Макс. выворот', min: 30, max: 75, step: 1, def: 58, rangeLabel: '30 — 75' },
+        { key: 'frontGrip', label: 'Зацеп перед. колес', min: 0.1, max: 1.5, step: 0.01, def: 0.95, rangeLabel: '0.1 — 1.5' },
+        { key: 'rearGrip', label: 'Зацеп зад. колес', min: 0.1, max: 1.5, step: 0.01, def: 0.85, rangeLabel: '0.1 — 1.5' },
+        { key: 'lateralGrip', label: 'Боковой зацеп', min: 0.1, max: 1.5, step: 0.01, def: 0.9, rangeLabel: '0.1 — 1.5' },
+        { key: 'driveBias', label: 'Привод', min: 0.0, max: 1.0, step: 0.05, def: 0.0, rangeLabel: '0.0 — 1.0' },
+        { key: 'centerOfGravity', label: 'Центр тяжести', min: -0.5, max: 0.5, step: 0.01, def: -0.15, rangeLabel: '-0.5 — 0.5' },
+        { key: 'carMass', label: 'Масса авто', min: 800, max: 3000, step: 10, def: 1350, rangeLabel: '800 — 3000' }
+      ];
+
+      // Базовый фильтр запрещенных слов / оскорблений для проверки предложений
+      const BANNED_PATTERNS = [
+        /ху[йяиею]/i, /пизд/i, /бля[дт]/i, /еба[тнл]/i, /ёба/i, /сук[аи]/i,
+        /пид[оа]р/i, /гандон/i, /мудак/i, /шлюх/i, /чмо/i, /уеб/i, /уёб/i,
+        /наци/i, /гитлер/i, /свастик/i, /ниг+ер/i, /хач/i, /чурк/i, /хох[оа]л/i, /кацап/i,
+        /http:\/\/|https:\/\/|t\.me\/|discord\.gg\//i
+      ];
+
+      function detectForbiddenContent(text) {
+        const str = String(text || '');
+        for (const rx of BANNED_PATTERNS) {
+          if (rx.test(str)) return true;
+        }
+        return false;
+      }
+
+      // Стартовые статьи Wiki (если в базе еще пусто)
+      const DEFAULT_WIKI = [
+        {
+          id: 'wiki-start',
+          title: 'Как начать играть на Drift Paradise',
+          category: 'СТАРТ / НОВИЧКАМ',
+          content: '1. Установите чистую GTA San Andreas без сторонних модификаций.\n2. Скачайте клиент Multi Theft Auto: San Andreas (MTA:SA) с официального сайта.\n3. Запустите MTA:SA, найдите в поиске серверов Drift Paradise и подключитесь.\n4. После загрузки ресурсов выберите первый автомобиль в салоне и отправляйтесь на тренировочную трассу или горный перевал.'
+        },
+        {
+          id: 'wiki-module',
+          title: 'Основы настройки дрифт-модуля',
+          category: 'ФИЗИКА И ТЮНИНГ',
+          content: '• Жесткость подвески (0.1–1.5): отвечает за стабильность кузова на перекладках.\n• Макс. выворот (30–75): позволяет удерживать глубокий угол без разворота.\n• Зацеп передних и задних колес (0.1–1.5): баланс между отзывчивостью морды и срывом задней оси.\n• Центр тяжести (-0.5–0.5) и масса авто (800–3000): влияют на инерцию в длинных дугах тоге.'
+        }
+      ];
+
+      const DEFAULT_HOME_CONFIG = {
+        slot1: {
+          img: 'image_5ac302.png',
+          tag: 'TSUISO / КОМАНДНЫЙ ДРИФТ',
+          caption: 'Синхронный занос в связке на горном перевале'
+        },
+        slot2: {
+          img: 'image_5ac5ae.png',
+          tag: 'ПАРНЫЕ ЗАЕЗДЫ • ТОГЕ',
+          caption: 'Близкий прессинг в дуге на горных серпантинах'
+        }
+      };
+
+      // Состояние приложения
+      let currentUser = null; // { id, login, nickname, email, role, totp_secret, totp_enabled }
+      let activeTab = 'home';
+      let modSubtab = 'setups';
+      let sugFilterStatus = 'ALL';
+      let pendingScreenshotDataUrl = '';
+      let pendingScreenshotInfo = '';
+      let pending2FASession = null;
+
+      let wikiArticles = [];
+      let driftSetups = [];
+      let suggestionsList = [];
+      let allProfilesList = [];
+      let auditLogsList = [];
+      let homeConfig = JSON.parse(JSON.stringify(DEFAULT_HOME_CONFIG));
+
+      // ==================== УТИЛИТЫ ЛОГИНА ====================
+      function normalizeLogin(raw) {
+        return String(raw || '').trim().toLowerCase();
+      }
+
+      function isValidLogin(login) {
+        return /^[a-z0-9_]{3,24}$/.test(login);
+      }
+
+      function loginToInternalEmail(login) {
+        return normalizeLogin(login) + '@dp.local';
+      }
+
+      function esc(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function notify(message, isError = false) {
+        const stack = document.getElementById('toast-stack');
+        const el = document.createElement('div');
+        el.className = `pointer-events-auto px-5 py-3.5 rounded-xl border-2 border-neutral-900 shadow-xl font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all ${
+          isError ? 'bg-dp-pink text-white' : 'bg-dp-amber text-dp-ink'
+        }`;
+        el.innerHTML = `<span>${isError ? '⚠' : '✔'}</span><span>${esc(message)}</span>`;
+        stack.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(8px)';
+          setTimeout(() => el.remove(), 220);
+        }, 3600);
+      }
+
+      function setLiveStatus(connected) {
+        const dot = document.getElementById('live-status-dot');
+        const txt = document.getElementById('live-status-text');
+        if (!dot || !txt) return;
+        if (connected) {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+          txt.textContent = 'LIVE';
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+          txt.textContent = 'LOCAL';
+        }
+      }
+
+      // ==================== КРИПТОГРАФИЯ RFC 6238 TOTP (2FA) + QR-ГЕНЕРАТОР ====================
+      function generateBase32Secret(length = 16) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const randomBytes = new Uint8Array(length);
+        crypto.getRandomValues(randomBytes);
+        let out = '';
+        for (let i = 0; i < length; i++) out += alphabet[randomBytes[i] % 32];
+        return out;
+      }
+
+      function base32ToBytes(base32) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const clean = String(base32 || '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+        let bits = 0;
+        let value = 0;
+        const output = [];
+        for (let i = 0; i < clean.length; i++) {
+          value = (value << 5) | alphabet.indexOf(clean[i]);
+          bits += 5;
+          if (bits >= 8) {
+            output.push((value >>> (bits - 8)) & 255);
+            bits -= 8;
+          }
+        }
+        return new Uint8Array(output);
+      }
+
+      async function computeTotpCode(secretBase32, windowOffset = 0) {
+        const keyBytes = base32ToBytes(secretBase32);
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw',
+          keyBytes,
+          { name: 'HMAC', hash: 'SHA-1' },
+          false,
+          ['sign']
+        );
+        const counter = Math.floor(Math.floor(Date.now() / 1000) / 30) + windowOffset;
+        const buf = new ArrayBuffer(8);
+        new DataView(buf).setUint32(4, counter, false);
+        const hmac = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, buf));
+        const offset = hmac[hmac.length - 1] & 0x0f;
+        const binary =
+          ((hmac[offset] & 0x7f) << 24) |
+          ((hmac[offset + 1] & 0xff) << 16) |
+          ((hmac[offset + 2] & 0xff) << 8) |
+          (hmac[offset + 3] & 0xff);
+        return String(binary % 1000000).padStart(6, '0');
+      }
+
+      async function verifyTotpCode(secretBase32, userCode) {
+        const sanitized = String(userCode || '').replace(/\s+/g, '');
+        if (!/^\d{6}$/.test(sanitized)) return false;
+        for (const offset of [-1, 0, 1]) {
+          const expected = await computeTotpCode(secretBase32, offset);
+          if (expected === sanitized) return true;
+        }
+        return false;
+      }
+
+      // Автономный генератор QR-кода на Canvas (Version 5-L, без внешних скриптов)
+      const QRGenerator = (function() {
+        const EXP = new Uint8Array(512);
+        const LOG = new Uint8Array(256);
+        let x = 1;
+        for (let i = 0; i < 255; i++) {
+          EXP[i] = x;
+          LOG[x] = i;
+          x <<= 1;
+          if (x & 0x100) x ^= 0x11d;
+        }
+        for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+
+        function gfMul(a, b) {
+          return (a === 0 || b === 0) ? 0 : EXP[LOG[a] + LOG[b]];
+        }
+
+        function rsGeneratorPoly(deg) {
+          let poly = [1];
+          for (let i = 0; i < deg; i++) {
+            const next = new Array(poly.length + 1).fill(0);
+            for (let j = 0; j < poly.length; j++) {
+              next[j] ^= poly[j];
+              next[j + 1] ^= gfMul(poly[j], EXP[i]);
+            }
+            poly = next;
+          }
+          return poly;
+        }
+
+        function rsEncode(data, ecLen) {
+          const gen = rsGeneratorPoly(ecLen);
+          const res = new Uint8Array(data.length + ecLen);
+          res.set(data);
+          for (let i = 0; i < data.length; i++) {
+            const coef = res[i];
+            if (coef !== 0) {
+              for (let j = 0; j < gen.length; j++) {
+                res[i + j] ^= gfMul(gen[j], coef);
+              }
+            }
+          }
+          return res.slice(data.length);
+        }
+
+        const SIZE = 37;
+        const DATA_CODEWORDS = 108;
+        const EC_CODEWORDS = 26;
+
+        function buildMatrix(text) {
+          const bytes = new TextEncoder().encode(text);
+          const bitBuf = [];
+          function pushBits(val, len) {
+            for (let i = len - 1; i >= 0; i--) bitBuf.push((val >>> i) & 1);
+          }
+
+          pushBits(0b0100, 4);
+          pushBits(bytes.length, 8);
+          for (const b of bytes) pushBits(b, 8);
+          pushBits(0, 4);
+          while (bitBuf.length % 8 !== 0) bitBuf.push(0);
+
+          const codewords = [];
+          for (let i = 0; i < bitBuf.length; i += 8) {
+            let byte = 0;
+            for (let b = 0; b < 8; b++) byte = (byte << 1) | bitBuf[i + b];
+            codewords.push(byte);
+          }
+          const pads = [0xec, 0x11];
+          let pIdx = 0;
+          while (codewords.length < DATA_CODEWORDS) {
+            codewords.push(pads[pIdx % 2]);
+            pIdx++;
+          }
+
+          const ec = rsEncode(new Uint8Array(codewords), EC_CODEWORDS);
+          const fullBits = [];
+          for (const cw of codewords) {
+            for (let i = 7; i >= 0; i--) fullBits.push((cw >>> i) & 1);
+          }
+          for (const cw of ec) {
+            for (let i = 7; i >= 0; i--) fullBits.push((cw >>> i) & 1);
+          }
+          for (let i = 0; i < 7; i++) fullBits.push(0);
+
+          const mod = Array.from({ length: SIZE }, () => new Int8Array(SIZE));
+          const isFunc = Array.from({ length: SIZE }, () => new Uint8Array(SIZE));
+
+          function setFunc(r, c, dark) {
+            if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) {
+              mod[r][c] = dark ? 1 : -1;
+              isFunc[r][c] = 1;
+            }
+          }
+
+          function drawFinder(r0, c0) {
+            for (let r = -1; r <= 7; r++) {
+              for (let c = -1; c <= 7; c++) {
+                const inOuter = r >= 0 && r <= 6 && c >= 0 && c <= 6;
+                const onBorder = r === 0 || r === 6 || c === 0 || c === 6;
+                const inInner = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+                setFunc(r0 + r, c0 + c, inOuter && (onBorder || inInner));
+              }
+            }
+          }
+
+          drawFinder(0, 0);
+          drawFinder(0, SIZE - 7);
+          drawFinder(SIZE - 7, 0);
+
+          for (let r = -2; r <= 2; r++) {
+            for (let c = -2; c <= 2; c++) {
+              const dark = Math.abs(r) === 2 || Math.abs(c) === 2 || (r === 0 && c === 0);
+              setFunc(30 + r, 30 + c, dark);
+            }
+          }
+
+          for (let i = 8; i < SIZE - 8; i++) {
+            setFunc(6, i, i % 2 === 0);
+            setFunc(i, 6, i % 2 === 0);
+          }
+
+          setFunc(SIZE - 8, 8, true);
+          for (let i = 0; i < 9; i++) {
+            if (!isFunc[8][i]) setFunc(8, i, false);
+            if (!isFunc[i][8]) setFunc(i, 8, false);
+          }
+          for (let i = 0; i < 8; i++) {
+            if (!isFunc[8][SIZE - 1 - i]) setFunc(8, SIZE - 1 - i, false);
+            if (!isFunc[SIZE - 1 - i][8]) setFunc(SIZE - 1 - i, 8, false);
+          }
+
+          let bitIdx = 0;
+          let upward = true;
+          for (let col = SIZE - 1; col >= 1; col -= 2) {
+            if (col === 6) col--;
+            for (let step = 0; step < SIZE; step++) {
+              const r = upward ? (SIZE - 1 - step) : step;
+              for (let dx = 0; dx < 2; dx++) {
+                const c = col - dx;
+                if (!isFunc[r][c]) {
+                  const rawBit = bitIdx < fullBits.length ? fullBits[bitIdx++] : 0;
+                  const masked = ((r + c) % 2 === 0) ? (rawBit ^ 1) : rawBit;
+                  mod[r][c] = masked ? 1 : -1;
+                }
+              }
+            }
+            upward = !upward;
+          }
+
+          const fmt = 0x77c4;
+          for (let i = 0; i < 15; i++) {
+            const bit = ((fmt >>> i) & 1) === 1;
+            if (i < 6) setFunc(i, 8, bit);
+            else if (i < 8) setFunc(i + 1, 8, bit);
+            else setFunc(SIZE - 15 + i, 8, bit);
+
+            if (i < 8) setFunc(8, SIZE - 1 - i, bit);
+            else if (i < 9) setFunc(8, 15 - i, bit);
+            else setFunc(8, 14 - i, bit);
+          }
+
+          return mod;
+        }
+
+        function renderToCanvas(canvas, text, scale = 5) {
+          const matrix = buildMatrix(text);
+          const margin = 3;
+          const dim = (SIZE + margin * 2) * scale;
+          canvas.width = dim;
+          canvas.height = dim;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, dim, dim);
+          ctx.fillStyle = '#141414';
+          for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+              if (matrix[r][c] === 1) {
+                ctx.fillRect((c + margin) * scale, (r + margin) * scale, scale, scale);
+              }
+            }
+          }
+        }
+
+        return { renderToCanvas };
+      })();
+
+      // ==================== ПРАВА ДОСТУПА (RBAC) ====================
+      function isStaff() {
+        return currentUser && ['owner', 'admin', 'moderator', 'wiki_editor'].includes(currentUser.role);
+      }
+
+      function isOwner() {
+        return currentUser && currentUser.role === 'owner';
+      }
+
+      function isAdminOrOwner() {
+        return currentUser && ['owner', 'admin'].includes(currentUser.role);
+      }
+
+      function canModerate() {
+        return currentUser && ['owner', 'admin', 'moderator'].includes(currentUser.role);
+      }
+
+      function canEditWiki() {
+        return currentUser && ['owner', 'admin', 'wiki_editor'].includes(currentUser.role);
+      }
+
+      // ==================== ЖУРНАЛ ВХОДОВ (AUDIT LOG) ====================
+      async function recordAuditEvent(profile, eventType) {
+        if (!sb || !profile) return;
+        try {
+          const ua = navigator.userAgent || 'Unknown';
+          const screenRes = `${window.screen.width}x${window.screen.height}`;
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+          let netMeta = 'Browser client';
+          try {
+            const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(2200) });
+            if (res.ok) {
+              const j = await res.json();
+              if (j && j.ip) netMeta = `${j.ip} (${j.country_name || ''}${j.city ? ', ' + j.city : ''})`;
+            }
+          } catch (_) {}
+
+          await sb.from('audit_logs').insert({
+            user_id: profile.id,
+            nickname: profile.login || profile.nickname,
+            email: profile.email,
+            role: profile.role,
+            event_type: eventType,
+            device_info: `${ua.slice(0, 120)} | ${screenRes}`,
+            timezone: tz,
+            net_meta: netMeta
+          });
+        } catch (err) {
+          console.warn('Audit log skip:', err);
+        }
+      }
+
+      // ==================== СИНХРОНИЗАЦИЯ ДАННЫХ С SUPABASE ====================
+      async function loadAllData() {
+        if (!sb) {
+          wikiArticles = [...DEFAULT_WIKI];
+          renderAllUI();
+          return;
+        }
+
+        try {
+          // 1. Загружаем Wiki
+          const { data: wData } = await sb.from('wiki_articles').select('*').order('updated_at', { ascending: true });
+          wikiArticles = (wData && wData.length > 0) ? wData : [...DEFAULT_WIKI];
+
+          // 2. Загружаем настройки дрифт-модуля
+          const { data: sData } = await sb.from('drift_setups').select('*').order('created_at', { ascending: false });
+          driftSetups = Array.isArray(sData) ? sData : [];
+
+          // 3. Загружаем предложения
+          const { data: sugData } = await sb.from('suggestions').select('*').order('created_at', { ascending: false });
+          suggestionsList = Array.isArray(sugData) ? sugData : [];
+
+          // 4. Загружаем конфигурацию главной страницы (фото и подписи)
+          const { data: cfgData } = await sb.from('site_config').select('*');
+          homeConfig = JSON.parse(JSON.stringify(DEFAULT_HOME_CONFIG));
+          if (Array.isArray(cfgData)) {
+            for (const row of cfgData) {
+              if (row.key === 'home_slot_1' && row.value) {
+                homeConfig.slot1 = { ...homeConfig.slot1, ...row.value };
+              }
+              if (row.key === 'home_slot_2' && row.value) {
+                homeConfig.slot2 = { ...homeConfig.slot2, ...row.value };
+              }
+            }
+          }
+
+          // 5. Если текущий пользователь — ВЛАДЕЛЕЦ (owner), загружаем конфиденциальные профили и логи
+          if (isOwner()) {
+            const { data: pData } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+            allProfilesList = Array.isArray(pData) ? pData : [];
+
+            const { data: lData } = await sb.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(100);
+            auditLogsList = Array.isArray(lData) ? lData : [];
+          } else {
+            allProfilesList = [];
+            auditLogsList = [];
+          }
+
+          setLiveStatus(true);
+        } catch (err) {
+          console.error('Ошибка синхронизации Supabase:', err);
+          setLiveStatus(false);
+        }
+
+        renderAllUI();
+      }
+
+      function setupRealtimeSubscriptions() {
+        if (!sb) return;
+        sb.channel('dp-realtime-all')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'drift_setups' }, () => loadAllData())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'wiki_articles' }, () => loadAllData())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'suggestions' }, () => loadAllData())
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'site_config' }, () => loadAllData())
+          .subscribe((status) => {
+            setLiveStatus(status === 'SUBSCRIBED');
+          });
+      }
+
+      async function restoreAuthSession() {
+        if (!sb) return;
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session && session.user) {
+            await hydrateUserProfile(session.user);
+          }
+        } catch (err) {
+          console.warn('Session restore error:', err);
+        }
+      }
+
+      async function hydrateUserProfile(authUser) {
+        if (!sb || !authUser) {
+          currentUser = null;
+          return;
+        }
+        const { data: prof } = await sb.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
+        if (prof) {
+          currentUser = {
+            id: prof.id,
+            login: prof.login || prof.nickname || authUser.email.split('@')[0],
+            nickname: prof.nickname || prof.login,
+            email: prof.email,
+            role: prof.role || 'player',
+            totp_secret: prof.totp_secret || '',
+            totp_enabled: Boolean(prof.totp_enabled)
+          };
+        } else {
+          const fallbackLogin = authUser.email.split('@')[0];
+          currentUser = {
+            id: authUser.id,
+            login: fallbackLogin,
+            nickname: fallbackLogin,
+            email: authUser.email,
+            role: 'player',
+            totp_secret: '',
+            totp_enabled: false
+          };
+        }
+      }
+
+      // ==================== ОБНОВЛЕНИЕ ШАПКИ, ПОДВАЛА И ГЛАВНОЙ ====================
+      function renderAllUI() {
+        updateHeaderAndFooter();
+        renderHomeMediaSlots();
+        refreshCounters();
+        if (activeTab === 'guide') renderWikiTab();
+        if (activeTab === 'setups') renderSetupsTab();
+        if (activeTab === 'suggestions') renderSuggestionsTab();
+        if (activeTab === 'moderation') renderModerationTab();
+      }
+
+      function updateHeaderAndFooter() {
+        const navMod = document.getElementById('nav-moderation');
+        const headerUserSlot = document.getElementById('header-user-slot');
+        const footerSlot = document.getElementById('footer-auth-slot');
+
+        if (isStaff()) {
+          navMod.classList.remove('hidden');
+          navMod.classList.add('flex');
+        } else {
+          navMod.classList.add('hidden');
+          navMod.classList.remove('flex');
+          if (activeTab === 'moderation') switchTab('home');
+        }
+
+        if (currentUser) {
+          const roleBadge = isStaff()
+            ? `<span class="px-1.5 py-0.5 rounded bg-dp-amber text-dp-ink text-[9px] font-black uppercase">${esc(currentUser.role)}</span>`
+            : `<span class="px-1.5 py-0.5 rounded bg-white/15 text-neutral-300 text-[9px] font-bold uppercase">Игрок</span>`;
+
+          headerUserSlot.innerHTML = `
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900 text-white border border-neutral-700">
+              <span class="font-display font-black text-xs text-dp-amber">${esc(currentUser.login)}</span>
+              ${roleBadge}
+              <button type="button" data-action="global-logout"
+                class="text-[11px] text-neutral-400 hover:text-dp-pink underline font-bold cursor-pointer ml-1">Выйти</button>
+            </div>
+          `;
+
+          footerSlot.innerHTML = isStaff()
+            ? `<div class="flex items-center gap-3 text-xs">
+                 <span class="text-dp-amber font-bold">● ${esc(currentUser.login)} (${esc(currentUser.role)})</span>
+                 <button type="button" data-action="global-logout" class="text-neutral-400 hover:text-white underline cursor-pointer">Выйти</button>
+               </div>`
+            : `<button type="button" data-action="open-staff-auth"
+                 class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-semibold text-neutral-400 hover:text-white transition-colors cursor-pointer">
+                 🔒 Staff Login
+               </button>`;
+        } else {
+          headerUserSlot.innerHTML = `
+            <button type="button" data-action="open-player-auth"
+              class="px-3.5 py-2 rounded-xl border-2 border-neutral-900 bg-white hover:bg-neutral-100 font-display font-black text-[11px] uppercase text-dp-ink transition-colors cursor-pointer whitespace-nowrap">
+              Войти
+            </button>
+          `;
+
+          footerSlot.innerHTML = `
+            <button type="button" data-action="open-staff-auth"
+              class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-semibold text-neutral-400 hover:text-white transition-colors cursor-pointer">
+              🔒 Staff Login
+            </button>
+          `;
+        }
+      }
+
+      function refreshCounters() {
+        const approvedSetups = driftSetups.filter(s => s.status === 'approved').length;
+        const pendingSetups = driftSetups.filter(s => s.status === 'pending').length;
+        const pendingSugs = suggestionsList.filter(s => !s.approved).length;
+        const visibleSugs = isStaff() ? suggestionsList.length : suggestionsList.filter(s => s.approved).length;
+
+        document.getElementById('approved-count-badge').textContent = approvedSetups;
+        document.getElementById('pending-count-badge').textContent = pendingSetups + pendingSugs;
+        document.getElementById('suggestions-count-badge').textContent = visibleSugs;
+      }
+
+      // ==================== СКРИНШОТЫ И РЕДАКТИРУЕМЫЕ ПОДПИСИ НА ГЛАВНОЙ ====================
+      function renderHomeMediaSlots() {
+        [1, 2].forEach(slotNum => {
+          const cfg = slotNum === 1 ? homeConfig.slot1 : homeConfig.slot2;
+          const imgEl = document.getElementById('home-img-' + slotNum);
+          const phEl = document.getElementById('home-placeholder-' + slotNum);
+          const tagEl = document.getElementById('home-tag-' + slotNum);
+          const capEl = document.getElementById('home-caption-' + slotNum);
+          const adminBox = document.getElementById('home-admin-controls-' + slotNum);
+
+          tagEl.textContent = cfg.tag;
+          capEl.textContent = cfg.caption;
+
+          imgEl.onerror = function() {
+            imgEl.classList.add('hidden');
+            phEl.classList.remove('hidden');
+          };
+          imgEl.onload = function() {
+            phEl.classList.add('hidden');
+            imgEl.classList.remove('hidden');
+          };
+          imgEl.src = cfg.img;
+
+          if (isAdminOrOwner()) {
+            adminBox.classList.remove('hidden');
+            adminBox.innerHTML = `
+              <button type="button" data-action="trigger-home-upload" data-slot="${slotNum}"
+                class="px-2.5 py-1.5 rounded-lg bg-dp-amber text-dp-ink border border-neutral-900 font-display font-black text-[10px] uppercase shadow cursor-pointer hover:brightness-105">
+                🖼 Заменить скриншот
+              </button>
+              <button type="button" data-action="open-caption-modal" data-slot="${slotNum}"
+                class="px-2.5 py-1.5 rounded-lg bg-neutral-900/90 text-white border border-white/25 font-display font-black text-[10px] uppercase shadow cursor-pointer hover:bg-black">
+                ✎ Подпись
+              </button>
+              <button type="button" data-action="reset-home-slot" data-slot="${slotNum}"
+                class="px-2 py-1.5 rounded-lg bg-dp-pink text-white font-bold text-[10px] uppercase shadow cursor-pointer hover:brightness-110">
+                Сброс
+              </button>
+            `;
+          } else {
+            adminBox.classList.add('hidden');
+            adminBox.innerHTML = '';
+          }
+        });
+      }
+
+      function processHomeImageUpload(slotNum, file) {
+        if (!isAdminOrOwner() || !file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const img = new Image();
+          img.onload = async function() {
+            const maxDim = 1280;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL('image/jpeg', 0.84);
+
+            const key = slotNum === 1 ? 'home_slot_1' : 'home_slot_2';
+            const updated = slotNum === 1
+              ? { ...homeConfig.slot1, img: compressed }
+              : { ...homeConfig.slot2, img: compressed };
+
+            if (sb) {
+              const { error } = await sb.from('site_config').upsert({ key, value: updated, updated_at: new Date().toISOString() });
+              if (error) {
+                notify('Ошибка сохранения скриншота: ' + error.message, true);
+                return;
+              }
+            }
+            if (slotNum === 1) homeConfig.slot1 = updated;
+            else homeConfig.slot2 = updated;
+            renderHomeMediaSlots();
+            notify(`Скриншот #${slotNum} обновлён для всех пользователей!`);
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function openHomeCaptionModal(slotNum) {
+        if (!isAdminOrOwner()) return;
+        const cfg = slotNum === 1 ? homeConfig.slot1 : homeConfig.slot2;
+        document.getElementById('home-caption-slot').value = String(slotNum);
+        document.getElementById('home-caption-modal-title').textContent = `ПОДПИСЬ ДЛЯ ФОТО #${slotNum}`;
+        document.getElementById('home-caption-tag-input').value = cfg.tag;
+        document.getElementById('home-caption-text-input').value = cfg.caption;
+        const modal = document.getElementById('home-caption-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeHomeCaptionModal() {
+        const modal = document.getElementById('home-caption-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      async function handleHomeCaptionSave(e) {
+        e.preventDefault();
+        if (!isAdminOrOwner()) return;
+        const slotNum = Number(document.getElementById('home-caption-slot').value);
+        const tag = document.getElementById('home-caption-tag-input').value.trim();
+        const caption = document.getElementById('home-caption-text-input').value.trim();
+
+        const key = slotNum === 1 ? 'home_slot_1' : 'home_slot_2';
+        const updated = slotNum === 1
+          ? { ...homeConfig.slot1, tag, caption }
+          : { ...homeConfig.slot2, tag, caption };
+
+        if (sb) {
+          const { error } = await sb.from('site_config').upsert({ key, value: updated, updated_at: new Date().toISOString() });
+          if (error) {
+            notify('Ошибка сохранения подписи: ' + error.message, true);
+            return;
+          }
+        }
+        if (slotNum === 1) homeConfig.slot1 = updated;
+        else homeConfig.slot2 = updated;
+        closeHomeCaptionModal();
+        renderHomeMediaSlots();
+        notify('Подпись обновлена для всех пользователей!');
+      }
+
+      async function resetHomeSlot(slotNum) {
+        if (!isAdminOrOwner()) return;
+        const key = slotNum === 1 ? 'home_slot_1' : 'home_slot_2';
+        const defVal = slotNum === 1 ? DEFAULT_HOME_CONFIG.slot1 : DEFAULT_HOME_CONFIG.slot2;
+        if (sb) {
+          await sb.from('site_config').upsert({ key, value: defVal, updated_at: new Date().toISOString() });
+        }
+        if (slotNum === 1) homeConfig.slot1 = { ...defVal };
+        else homeConfig.slot2 = { ...defVal };
+        renderHomeMediaSlots();
+        notify(`Слот #${slotNum} сброшен к исходному виду.`);
+      }
+
+      // ==================== НАВИГАЦИЯ ПО ВКЛАДКАМ ====================
+      function switchTab(tabName) {
+        if (tabName === 'moderation' && !isStaff()) {
+          tabName = 'home';
+        }
+        activeTab = tabName;
+        document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+        const target = document.getElementById('tab-' + tabName);
+        if (target) target.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.classList.remove('bg-dp-ink', 'text-white');
+          btn.classList.add('text-dp-ink', 'hover:bg-neutral-100');
+        });
+        const activeBtn = document.getElementById('nav-' + tabName);
+        if (activeBtn) {
+          activeBtn.classList.remove('text-dp-ink', 'hover:bg-neutral-100');
+          activeBtn.classList.add('bg-dp-ink', 'text-white');
+        }
+
+        if (tabName === 'guide') renderWikiTab();
+        if (tabName === 'setups') renderSetupsTab();
+        if (tabName === 'suggestions') renderSuggestionsTab();
+        if (tabName === 'moderation') renderModerationTab();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // ==================== АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ ИГРОКОВ (ПО ЛОГИНУ) ====================
+      function openPlayerAuthModal(mode = 'login') {
+        const modal = document.getElementById('player-auth-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        switchPlayerAuthTab(mode);
+      }
+
+      function closePlayerAuthModal() {
+        const modal = document.getElementById('player-auth-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function switchPlayerAuthTab(mode) {
+        ['login', 'register', 'reset'].forEach(m => {
+          const btn = document.getElementById('pauth-tab-' + m);
+          if (!btn) return;
+          btn.className = (m === mode)
+            ? 'flex-1 py-2 rounded-lg text-xs font-black uppercase bg-dp-ink text-white cursor-pointer'
+            : 'flex-1 py-2 rounded-lg text-xs font-bold uppercase text-neutral-600 cursor-pointer';
+        });
+
+        const body = document.getElementById('player-auth-body');
+        if (mode === 'login') {
+          body.innerHTML = `
+            <form id="player-login-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Логин *</label>
+                <input type="text" id="plogin-username" required placeholder="Ваш логин (a-z, 0-9, _)"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Пароль *</label>
+                <input type="password" id="plogin-pass" required placeholder="••••••••"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+              </div>
+              <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">ВОЙТИ В АККАУНТ</button>
+            </form>
+          `;
+        } else if (mode === 'register') {
+          body.innerHTML = `
+            <form id="player-register-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Придумайте логин *</label>
+                <input type="text" id="preg-username" required minlength="3" maxlength="24" placeholder="Например: drift_king"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+                <span class="text-[11px] text-neutral-500">От 3 до 24 символов: латиница, цифры или _</span>
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Придумайте пароль *</label>
+                <input type="password" id="preg-pass" required minlength="6" placeholder="Минимум 6 символов"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+              </div>
+              <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+            </form>
+          `;
+        } else {
+          body.innerHTML = `
+            <div class="space-y-3">
+              <p class="text-xs text-neutral-600 leading-relaxed">
+                Если вы забыли пароль, обратитесь к владельцу портала — он выдаст одноразовый код восстановления на 30 минут.
+              </p>
+              <form id="player-reset-form" class="space-y-3.5">
+                <div>
+                  <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Ваш логин *</label>
+                  <input type="text" id="preset-username" required placeholder="Ваш логин"
+                    class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Код восстановления от владельца *</label>
+                  <input type="text" id="preset-code" required placeholder="Например: A9F2K8L1"
+                    class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-mono font-bold uppercase focus:border-dp-ink focus:outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Новый пароль *</label>
+                  <input type="password" id="preset-newpass" required minlength="6"
+                    class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+                </div>
+                <button type="submit" class="w-full dp-sticker py-3 text-xs cursor-pointer">СМЕНИТЬ ПАРОЛЬ</button>
+              </form>
+            </div>
+          `;
+        }
+      }
+
+      async function handlePlayerLogin(e) {
+        e.preventDefault();
+        if (!sb) { notify('Supabase не подключен.', true); return; }
+        const login = normalizeLogin(document.getElementById('plogin-username').value);
+        const password = document.getElementById('plogin-pass').value;
+
+        if (!isValidLogin(login)) {
+          notify('Некорректный формат логина (3–24 символа: a-z, 0-9, _).', true);
+          return;
+        }
+
+        const { data, error } = await sb.auth.signInWithPassword({
+          email: loginToInternalEmail(login),
+          password
+        });
+
+        if (error || !data.user) {
+          notify('Неверный логин или пароль.', true);
+          return;
+        }
+
+        await hydrateUserProfile(data.user);
+        if (isStaff()) {
+          // Если это аккаунт персонала, требуем вход через Staff Login с 2FA
+          await sb.auth.signOut();
+          currentUser = null;
+          closePlayerAuthModal();
+          notify('Для входа персонала используйте кнопку «Staff Login» в подвале сайта.', true);
+          return;
+        }
+
+        await recordAuditEvent(currentUser, 'player_login');
+        closePlayerAuthModal();
+        await loadAllData();
+        notify(`Добро пожаловать, ${currentUser.login}!`);
+      }
+
+      async function handlePlayerRegister(e) {
+        e.preventDefault();
+        if (!sb) { notify('Supabase не подключен.', true); return; }
+        const login = normalizeLogin(document.getElementById('preg-username').value);
+        const password = document.getElementById('preg-pass').value;
+
+        if (!isValidLogin(login)) {
+          notify('Логин должен содержать 3–24 символа: латиницу (a-z), цифры (0-9) или _.', true);
+          return;
+        }
+
+        const internalEmail = loginToInternalEmail(login);
+        const { data, error } = await sb.auth.signUp({
+          email: internalEmail,
+          password
+        });
+
+        if (error) {
+          notify('Ошибка регистрации: ' + error.message, true);
+          return;
+        }
+
+        if (!data.user) {
+          notify('Не удалось создать аккаунт. Попробуйте другой логин.', true);
+          return;
+        }
+
+        await sb.from('profiles').upsert({
+          id: data.user.id,
+          login,
+          nickname: login,
+          email: internalEmail,
+          role: 'player'
+        });
+
+        await hydrateUserProfile(data.user);
+        await recordAuditEvent(currentUser, 'player_register');
+        closePlayerAuthModal();
+        await loadAllData();
+        notify(`Аккаунт ${login} успешно зарегистрирован!`);
+      }
+
+      async function handlePlayerPasswordReset(e) {
+        e.preventDefault();
+        if (!sb) return;
+        const login = normalizeLogin(document.getElementById('preset-username').value);
+        const code = document.getElementById('preset-code').value.trim().toUpperCase();
+        const newPassword = document.getElementById('preset-newpass').value;
+
+        const { error } = await sb.rpc('player_reset_password_with_code', {
+          target_login: login,
+          recovery_code: code,
+          new_password: newPassword
+        });
+
+        if (error) {
+          notify('Ошибка сброса пароля: ' + error.message, true);
+          return;
+        }
+
+        notify('Пароль успешно изменён! Теперь войдите с новым паролем.');
+        switchPlayerAuthTab('login');
+      }
+
+      // ==================== ВХОД ПЕРСОНАЛА / ПРИВЯЗКА ВЛАДЕЛЬЦА + 2FA TOTP ====================
+      async function openStaffAuthModal() {
+        pending2FASession = null;
+        const modal = document.getElementById('staff-auth-modal');
+        const heading = document.getElementById('staff-modal-heading');
+        const body = document.getElementById('staff-auth-body');
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        heading.textContent = 'ПРОВЕРКА ДОСТУПА...';
+        body.innerHTML = `<div class="py-6 text-center text-xs font-bold text-neutral-500">Загрузка статуса владельца...</div>`;
+
+        let ownerExists = false;
+        if (sb) {
+          try {
+            const { data } = await sb.rpc('check_owner_exists');
+            ownerExists = Boolean(data);
+          } catch (_) {
+            ownerExists = true;
+          }
+        }
+
+        if (!ownerExists) {
+          heading.textContent = 'ПРИВЯЗКА ВЛАДЕЛЬЦА';
+          body.innerHTML = `
+            <div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-medium leading-relaxed">
+              Владелец портала ещё не привязан. Создайте главный аккаунт по логину — сразу после этого откроется привязка 2FA-аутентификатора.
+            </div>
+            <form id="owner-bootstrap-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Логин владельца *</label>
+                <input type="text" id="reg-owner-login" required minlength="3" maxlength="24" placeholder="Например: wsqx"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+                <span class="text-[11px] text-neutral-500">Латиница, цифры или _ (без почты)</span>
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Пароль владельца *</label>
+                <input type="password" id="reg-owner-pass" required minlength="6" placeholder="Минимум 6 символов"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+              </div>
+              <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">
+                СОЗДАТЬ ВЛАДЕЛЬЦА И ПОДКЛЮЧИТЬ 2FA
+              </button>
+            </form>
+          `;
+        } else {
+          heading.textContent = 'ВХОД ДЛЯ ПЕРСОНАЛА';
+          body.innerHTML = `
+            <form id="staff-signin-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Логин сотрудника *</label>
+                <input type="text" id="login-staff-username" required placeholder="Ваш логин (например: wsqx)"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Пароль *</label>
+                <input type="password" id="login-staff-pass" required placeholder="••••••••"
+                  class="w-full px-3.5 py-2.5 rounded-xl border-2 border-neutral-300 text-sm font-bold focus:border-dp-ink focus:outline-none" />
+              </div>
+              <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">
+                ДАЛЕЕ → 2FA АУТЕНТИФИКАТОР
+              </button>
+            </form>
+          `;
+        }
+      }
+
+      function closeStaffAuthModal() {
+        pending2FASession = null;
+        const modal = document.getElementById('staff-auth-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      // Регистрация первого владельца по логину (без сброса сессии!)
+      async function handleOwnerBootstrap(e) {
+        e.preventDefault();
+        if (!sb) { notify('Supabase не подключен.', true); return; }
+
+        const login = normalizeLogin(document.getElementById('reg-owner-login').value);
+        const password = document.getElementById('reg-owner-pass').value;
+
+        if (!isValidLogin(login)) {
+          notify('Логин должен содержать 3–24 символа (a-z, 0-9, _).', true);
+          return;
+        }
+
+        const internalEmail = loginToInternalEmail(login);
+        let authUser = null;
+
+        // Пробуем создать аккаунт через signUp
+        const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
+          email: internalEmail,
+          password
+        });
+
+        if (signUpData && signUpData.user) {
+          authUser = signUpData.user;
+        } else if (signUpErr) {
+          // Если аккаунт уже создан ранее, пробуем войти по этому логину/паролю
+          const { data: signInData, error: signInErr } = await sb.auth.signInWithPassword({
+            email: internalEmail,
+            password
+          });
+          if (signInErr || !signInData.user) {
+            notify('Ошибка привязки владельца: ' + signUpErr.message, true);
+            return;
+          }
+          authUser = signInData.user;
+        }
+
+        // Сохраняем профиль владельца (если владелец ещё не занят)
+        const { error: profErr } = await sb.from('profiles').upsert({
+          id: authUser.id,
+          login,
+          nickname: login,
+          email: internalEmail,
+          role: 'owner'
+        });
+
+        if (profErr) {
+          notify('Ошибка сохранения профиля владельца: ' + profErr.message, true);
+          return;
+        }
+
+        const secret = generateBase32Secret(16);
+        pending2FASession = {
+          userId: authUser.id,
+          login,
+          email: internalEmail,
+          role: 'owner',
+          secret,
+          isFirstSetup: true
+        };
+
+        // Сразу открываем экран привязки QR-кода 2FA, не выкидывая пользователя!
+        renderTwoFactorQRScreen(pending2FASession);
+      }
+
+      // Шаг 1 входа стаффа по логину и паролю
+      async function handleStaffSigninStep1(e) {
+        e.preventDefault();
+        if (!sb) { notify('Supabase не подключен.', true); return; }
+
+        const login = normalizeLogin(document.getElementById('login-staff-username').value);
+        const password = document.getElementById('login-staff-pass').value;
+
+        if (!isValidLogin(login)) {
+          notify('Введите корректный логин (a-z, 0-9, _).', true);
+          return;
+        }
+
+        const internalEmail = loginToInternalEmail(login);
+        const { data, error } = await sb.auth.signInWithPassword({
+          email: internalEmail,
+          password
+        });
+
+        if (error || !data.user) {
+          notify('Неверный логин или пароль.', true);
+          return;
+        }
+
+        const { data: prof } = await sb.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+        if (!prof || !['owner', 'admin', 'moderator', 'wiki_editor'].includes(prof.role)) {
+          await sb.auth.signOut();
+          notify('У этого аккаунта нет прав персонала.', true);
+          return;
+        }
+
+        // Если 2FA ещё не привязан (например, после ручного создания в SQL), сразу предлагаем привязать QR-код
+        if (!prof.totp_enabled || !prof.totp_secret) {
+          const newSecret = generateBase32Secret(16);
+          pending2FASession = {
+            userId: prof.id,
+            login: prof.login || login,
+            email: prof.email,
+            role: prof.role,
+            secret: newSecret,
+            isFirstSetup: true
+          };
+          renderTwoFactorQRScreen(pending2FASession);
+          return;
+        }
+
+        // Иначе запрашиваем 6-значный код из приложения
+        pending2FASession = {
+          userId: prof.id,
+          login: prof.login || login,
+          email: prof.email,
+          role: prof.role,
+          secret: prof.totp_secret,
+          isFirstSetup: false
+        };
+
+        const heading = document.getElementById('staff-modal-heading');
+        const body = document.getElementById('staff-auth-body');
+        heading.textContent = 'КОД АУТЕНТИФИКАТОРА (2FA)';
+        body.innerHTML = `
+          <form id="verify-2fa-code-form" class="space-y-4">
+            <p class="text-xs text-neutral-600">
+              Введите 6-значный код из приложения <strong>Google Authenticator / Яндекс Ключ</strong> для <strong>${esc(pending2FASession.login)}</strong>:
+            </p>
+            <input type="text" id="totp-code-input" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000"
+              class="w-full px-4 py-3 rounded-xl border-2 border-neutral-300 text-center font-display font-black text-xl tracking-[0.35em] focus:border-dp-ink focus:outline-none" />
+            <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">
+              ПОДТВЕРДИТЬ ВХОД
+            </button>
+          </form>
+        `;
+        setTimeout(() => document.getElementById('totp-code-input')?.focus(), 50);
+      }
+
+      // Экран привязки 2FA с QR-кодом и текстовым ключом
+      function renderTwoFactorQRScreen(sessionObj) {
+        const heading = document.getElementById('staff-modal-heading');
+        const body = document.getElementById('staff-auth-body');
+        heading.textContent = 'ПРИВЯЗКА 2FA АУТЕНТИФИКАТОРА';
+
+        const otpauthUri = `otpauth://totp/DriftParadise:${encodeURIComponent(sessionObj.login)}?secret=${sessionObj.secret}&issuer=DriftParadise`;
+
+        body.innerHTML = `
+          <div class="space-y-4">
+            <p class="text-xs text-neutral-700 leading-relaxed">
+              Отсканируйте QR-код в приложении <strong>Google Authenticator</strong>, <strong>Яндекс Ключ</strong> или <strong>Authy</strong>, либо скопируйте секретный ключ вручную:
+            </p>
+
+            <div class="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-neutral-900 bg-neutral-50">
+              <canvas id="totp-qr-canvas" class="rounded-lg shadow-sm border border-neutral-200"></canvas>
+              <div class="mt-3 text-center">
+                <span class="block text-[10px] font-black uppercase text-neutral-500">Ключ для ручного ввода:</span>
+                <code class="inline-block mt-1 px-3 py-1 rounded bg-dp-ink text-dp-amber font-mono font-bold text-xs tracking-widest select-all">${sessionObj.secret}</code>
+              </div>
+            </div>
+
+            <form id="verify-2fa-code-form" class="space-y-3">
+              <div>
+                <label class="block text-xs font-black uppercase text-neutral-700 mb-1">Введите 6-значный код из приложения *</label>
+                <input type="text" id="totp-code-input" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000"
+                  class="w-full px-4 py-3 rounded-xl border-2 border-neutral-300 text-center font-display font-black text-xl tracking-[0.35em] focus:border-dp-ink focus:outline-none" />
+              </div>
+              <button type="submit" class="w-full dp-sticker py-3.5 text-xs sm:text-sm cursor-pointer">
+                ПОДТВЕРДИТЬ И ЗАВЕРШИТЬ ПРИВЯЗКУ
+              </button>
+            </form>
+          </div>
+        `;
+
+        const canvas = document.getElementById('totp-qr-canvas');
+        if (canvas) QRGenerator.renderToCanvas(canvas, otpauthUri, 5);
+        setTimeout(() => document.getElementById('totp-code-input')?.focus(), 50);
+      }
+
+      // Проверка 6-значного кода 2FA (и при первичной привязке, и при обычном входе)
+      async function handleVerify2FACode(e) {
+        e.preventDefault();
+        if (!pending2FASession) return;
+
+        const code = document.getElementById('totp-code-input').value.trim();
+        const isValid = await verifyTotpCode(pending2FASession.secret, code);
+        if (!isValid) {
+          notify('Неверный 6-значный код. Проверьте точное время на телефоне и введите актуальный код.', true);
+          return;
+        }
+
+        if (pending2FASession.isFirstSetup && sb) {
+          const { error } = await sb.from('profiles').update({
+            totp_secret: pending2FASession.secret,
+            totp_enabled: true
+          }).eq('id', pending2FASession.userId);
+
+          if (error) {
+            notify('Ошибка сохранения 2FA: ' + error.message, true);
+            return;
+          }
+        }
+
+        currentUser = {
+          id: pending2FASession.userId,
+          login: pending2FASession.login,
+          nickname: pending2FASession.login,
+          email: pending2FASession.email,
+          role: pending2FASession.role,
+          totp_secret: pending2FASession.secret,
+          totp_enabled: true
+        };
+
+        await recordAuditEvent(currentUser, pending2FASession.isFirstSetup ? 'staff_2fa_bound' : 'staff_login_2fa');
+        closeStaffAuthModal();
+        await loadAllData();
+        notify(`2FA подтверждена! Добро пожаловать, ${currentUser.login} (${currentUser.role}).`);
+      }
+
+      async function handleGlobalLogout() {
+        if (sb) await sb.auth.signOut();
+        currentUser = null;
+        allProfilesList = [];
+        auditLogsList = [];
+        await loadAllData();
+        switchTab('home');
+        notify('Вы вышли из аккаунта.');
+      }
+
+      // ==================== ВКЛАДКА «ГАЙД» (WIKI) ====================
+      function renderWikiTab(filterText = '') {
+        const articlesBox = document.getElementById('wiki-articles-list');
+        const tocNav = document.getElementById('wiki-toc-nav');
+        const staffBox = document.getElementById('wiki-staff-actions');
+        const editable = canEditWiki();
+
+        staffBox.innerHTML = editable
+          ? `<button type="button" data-action="open-wiki-create" class="dp-sticker px-5 py-3 text-xs sm:text-sm cursor-pointer">+ ДОБАВИТЬ СТАТЬЮ</button>`
+          : '';
+
+        const query = (filterText || document.getElementById('wiki-search-input').value || '').trim().toLowerCase();
+        const visible = wikiArticles.filter(a =>
+          !query || a.title.toLowerCase().includes(query) || a.content.toLowerCase().includes(query) || (a.category || '').toLowerCase().includes(query)
+        );
+
+        tocNav.innerHTML = visible.map((art, idx) => `
+          <a href="#wiki-${art.id}" data-action="toc-jump"
+            class="wiki-toc-item flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-neutral-700 hover:bg-neutral-100 hover:text-dp-ink transition-all border border-transparent">
+            <span class="w-6 h-6 rounded-md bg-dp-ink text-dp-amber font-display font-black text-[11px] flex items-center justify-center shrink-0">
+              0${idx + 1}
+            </span>
+            <span class="line-clamp-2">${esc(art.title)}</span>
+          </a>
+        `).join('');
+
+        if (visible.length === 0) {
+          articlesBox.innerHTML = `
+            <div class="rounded-2xl border-2 border-dashed border-neutral-300 p-10 text-center">
+              <p class="font-display font-black text-lg uppercase text-neutral-700">Статей по вашему запросу не найдено</p>
+            </div>`;
+          return;
+        }
+
+        articlesBox.innerHTML = visible.map((art, idx) => `
+          <article id="wiki-${art.id}" class="scroll-mt-28 rounded-2xl border-2 border-neutral-900 bg-white p-6 sm:p-8 shadow-[6px_6px_0px_#141414]">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-dp-ink text-dp-amber text-xs font-black uppercase tracking-wider">
+                0${idx + 1} • ${esc(art.category || 'ГАЙД')}
+              </span>
+              ${editable ? `
+                <div class="flex items-center gap-2">
+                  <button type="button" data-action="open-wiki-edit" data-id="${art.id}"
+                    class="px-3 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-xs font-bold text-neutral-800 cursor-pointer">
+                    ✎ Редактировать
+                  </button>
+                  <button type="button" data-action="delete-wiki-article" data-id="${art.id}"
+                    class="px-3 py-1 rounded-lg bg-dp-pink/10 hover:bg-dp-pink/20 text-xs font-bold text-dp-pink cursor-pointer">
+                    🗑 Удалить
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+
+            <h2 class="font-display font-black text-2xl sm:text-3xl text-dp-ink uppercase leading-tight mb-4">
+              ${esc(art.title)}
+            </h2>
+
+            <div class="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-line font-medium">
+              ${esc(art.content)}
+            </div>
+          </article>
+        `).join('');
+      }
+
+      function openWikiEditor(editId = '') {
+        if (!canEditWiki()) return;
+        const modal = document.getElementById('wiki-editor-modal');
+        document.getElementById('wiki-editor-form').reset();
+        document.getElementById('wiki-editor-id').value = editId;
+
+        if (editId) {
+          const art = wikiArticles.find(a => String(a.id) === String(editId));
+          if (!art) return;
+          document.getElementById('wiki-editor-title').textContent = 'РЕДАКТИРОВАТЬ СТАТЬЮ';
+          document.getElementById('wiki-editor-heading').value = art.title;
+          document.getElementById('wiki-editor-tag').value = art.category || '';
+          document.getElementById('wiki-editor-content').value = art.content;
+        } else {
+          document.getElementById('wiki-editor-title').textContent = 'ДОБАВИТЬ СТАТЬЮ В ГАЙД';
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeWikiEditor() {
+        const modal = document.getElementById('wiki-editor-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      async function handleWikiEditorSubmit(e) {
+        e.preventDefault();
+        if (!canEditWiki() || !sb) return;
+
+        const id = document.getElementById('wiki-editor-id').value;
+        const title = document.getElementById('wiki-editor-heading').value.trim();
+        const category = document.getElementById('wiki-editor-tag').value.trim() || 'ГАЙД';
+        const content = document.getElementById('wiki-editor-content').value.trim();
+
+        if (id && !id.startsWith('wiki-')) {
+          const { error } = await sb.from('wiki_articles').update({
+            title, category, content, updated_by: currentUser.login, updated_at: new Date().toISOString()
+          }).eq('id', id);
+          if (error) { notify('Ошибка обновления статьи: ' + error.message, true); return; }
+        } else {
+          const { error } = await sb.from('wiki_articles').insert({
+            title, category, content, updated_by: currentUser.login
+          });
+          if (error) { notify('Ошибка добавления статьи: ' + error.message, true); return; }
+        }
+
+        closeWikiEditor();
+        await loadAllData();
+        notify('Статья Wiki сохранена!');
+      }
+
+      // ==================== ВКЛАДКА «НАСТРОЙКИ ДРИФТ-МОДУЛЯ» ====================
+      function buildSetupParameterInputs() {
+        const container = document.getElementById('setup-params-fields');
+        container.innerHTML = DRIFT_PARAMETERS.map(p => `
+          <div class="bg-white/5 rounded-xl p-3 border border-white/10 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <label for="param-num-${p.key}" class="text-xs font-bold text-white">${esc(p.label)}</label>
+              <span class="text-[10px] font-bold text-neutral-400">${esc(p.rangeLabel)}</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <input type="range" id="param-range-${p.key}" data-sync-param="${p.key}"
+                min="${p.min}" max="${p.max}" step="${p.step}" value="${p.def}"
+                class="flex-1 dp-range" />
+              <input type="number" id="param-num-${p.key}" data-sync-param="${p.key}"
+                min="${p.min}" max="${p.max}" step="any" value="${p.def}" required
+                class="w-24 px-2.5 py-1.5 rounded-lg bg-[#141414] border border-white/25 text-dp-amber font-display font-black text-xs text-right focus:border-dp-amber focus:outline-none" />
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function renderSetupsTab() {
+        const grid = document.getElementById('setups-catalog-grid');
+        const approved = driftSetups.filter(s => s.status === 'approved');
+
+        if (approved.length === 0) {
+          document.getElementById('setups-visible-count').textContent = '0';
+          grid.innerHTML = `
+            <div class="col-span-full rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50/70 p-12 sm:p-16 text-center">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-dp-ink text-dp-amber flex items-center justify-center font-display font-black text-2xl">
+                00
+              </div>
+              <h3 class="font-display font-black text-xl sm:text-2xl uppercase text-dp-ink mb-2">
+                Опубликованных настроек пока нет. Будьте первым!
+              </h3>
+              <p class="text-sm text-neutral-600 max-w-md mx-auto mb-6">
+                Загрузите параметры своего дрифт-модуля и скриншот авто. После проверки модератором конфигурация появится в общем каталоге.
+              </p>
+              <button type="button" data-action="open-setup-modal" class="dp-sticker px-7 py-3.5 text-xs sm:text-sm cursor-pointer">
+                + ПРЕДЛОЖИТЬ СВОЮ НАСТРОЙКУ
+              </button>
+            </div>`;
+          return;
+        }
+
+        const searchQ = document.getElementById('setup-search-input').value.trim().toLowerCase();
+        const styleQ = document.getElementById('setup-style-filter').value;
+
+        const filtered = approved.filter(s => {
+          if (styleQ !== 'ALL' && s.style !== styleQ) return false;
+          if (searchQ && !(s.car_name || '').toLowerCase().includes(searchQ) && !(s.author_name || '').toLowerCase().includes(searchQ)) {
+            return false;
+          }
+          return true;
+        });
+
+        document.getElementById('setups-visible-count').textContent = filtered.length;
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full rounded-2xl border-2 border-dashed border-neutral-300 p-10 text-center">
+              <p class="font-display font-black text-lg uppercase text-neutral-700">По выбранному фильтру настроек не найдено</p>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(setup => `
+          <div class="rounded-2xl border-2 border-neutral-900 bg-white overflow-hidden shadow-[6px_6px_0px_#141414] flex flex-col">
+            <div class="relative h-52 bg-neutral-900 group cursor-zoom-in overflow-hidden" data-action="open-lightbox" data-id="${setup.id}">
+              <img src="${esc(setup.screenshot_url)}" alt="${esc(setup.car_name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                <span class="px-2.5 py-1 rounded bg-dp-amber text-dp-ink font-display font-black text-[11px] uppercase shadow">${esc(setup.car_name)}</span>
+                <span class="px-2.5 py-1 rounded bg-dp-ink/90 text-white text-[11px] font-bold">${esc(setup.style)}</span>
+              </div>
+              <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded bg-black/75 text-white text-[11px] font-bold">🔍 Увеличить</div>
+            </div>
+
+            <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
+              <div>
+                <div class="flex items-center justify-between text-xs text-neutral-500 font-bold mb-1">
+                  <span>Автор: <strong class="text-dp-ink">${esc(setup.author_name)}</strong></span>
+                  <span>${new Date(setup.created_at).toLocaleDateString('ru-RU')}</span>
+                </div>
+                <h3 class="font-display font-black text-xl uppercase text-dp-ink">${esc(setup.car_name)}</h3>
+                ${setup.description ? `<p class="text-xs sm:text-sm text-neutral-600 mt-1.5 leading-relaxed">${esc(setup.description)}</p>` : ''}
+              </div>
+
+              <div class="rounded-xl bg-[#161616] text-white p-3.5 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                ${DRIFT_PARAMETERS.map(spec => `
+                  <div class="bg-white/5 rounded-lg p-2">
+                    <div class="text-neutral-400 text-[10px] font-bold leading-tight">${esc(spec.label)}</div>
+                    <div class="font-display font-black text-xs text-dp-amber mt-0.5">${setup.params ? setup.params[spec.key] : '-'}</div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <button type="button" data-action="copy-setup-params" data-id="${setup.id}"
+                class="w-full py-2.5 px-4 rounded-xl bg-dp-ink hover:bg-neutral-800 text-white font-display font-black text-xs uppercase tracking-wider transition-colors cursor-pointer">
+                📋 СКОПИРОВАТЬ ВСЕ ПАРАМЕТРЫ
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function openSetupSubmitModal() {
+        pendingScreenshotDataUrl = '';
+        pendingScreenshotInfo = '';
+        document.getElementById('setup-submit-form').reset();
+        if (currentUser) {
+          document.getElementById('setup-author-input').value = currentUser.login;
+        }
+        document.getElementById('setup-screenshot-preview-wrap').classList.add('hidden');
+        buildSetupParameterInputs();
+        const modal = document.getElementById('setup-submit-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeSetupSubmitModal() {
+        const modal = document.getElementById('setup-submit-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function processScreenshotUpload(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          notify('Выберите корректный файл изображения.', true);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const img = new Image();
+          img.onload = function() {
+            const maxDim = 1280;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+            pendingScreenshotDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            pendingScreenshotInfo = `${file.name} (${w}×${h}px)`;
+            document.getElementById('setup-screenshot-preview').src = pendingScreenshotDataUrl;
+            document.getElementById('setup-screenshot-caption').textContent = `✔ Скриншот загружен: ${pendingScreenshotInfo}`;
+            document.getElementById('setup-screenshot-preview-wrap').classList.remove('hidden');
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      async function handleSetupFormSubmit(e) {
+        e.preventDefault();
+        if (!sb) { notify('Supabase не подключен.', true); return; }
+
+        const urlFallback = document.getElementById('setup-url-input').value.trim();
+        const finalScreenshot = pendingScreenshotDataUrl || urlFallback;
+        if (!finalScreenshot) {
+          notify('Прикрепите файл скриншота или укажите ссылку!', true);
+          return;
+        }
+
+        const params = {};
+        for (const spec of DRIFT_PARAMETERS) {
+          const numVal = parseFloat(document.getElementById('param-num-' + spec.key).value);
+          if (Number.isNaN(numVal) || numVal < spec.min - 1e-9 || numVal > spec.max + 1e-9) {
+            notify(`Параметр «${spec.label}» должен быть в диапазоне ${spec.rangeLabel}.`, true);
+            return;
+          }
+          params[spec.key] = numVal;
+        }
+
+        const { error } = await sb.from('drift_setups').insert({
+          author_id: currentUser ? currentUser.id : null,
+          author_name: document.getElementById('setup-author-input').value.trim(),
+          car_name: document.getElementById('setup-car-input').value.trim(),
+          style: document.getElementById('setup-style-input').value,
+          description: document.getElementById('setup-comment-input').value.trim(),
+          screenshot_url: finalScreenshot,
+          params,
+          status: 'pending'
+        });
+
+        if (error) {
+          notify('Ошибка отправки настройки: ' + error.message, true);
+          return;
+        }
+
+        closeSetupSubmitModal();
+        await loadAllData();
+        notify('Настройка отправлена на проверку модераторам!');
+      }
+
+      function copySetupToClipboard(id) {
+        const s = driftSetups.find(item => String(item.id) === String(id));
+        if (!s || !s.params) return;
+        const lines = DRIFT_PARAMETERS.map(spec => `${spec.label}: ${s.params[spec.key]}`).join('\n');
+        const text = `DRIFT PARADISE | ${s.car_name} (${s.style}) — Автор: ${s.author_name}\n${lines}`;
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        notify('Параметры скопированы в буфер обмена!');
+      }
+
+      // ==================== ВКЛАДКА «ПРЕДЛОЖИТЬ» (ПРЕМОДЕРАЦИЯ + УДАЛЕНИЕ + ЗАПРЕТКИ) ====================
+      function renderSuggestionsTab() {
+        const container = document.getElementById('suggestions-cards-container');
+        const staffCanManage = canModerate();
+
+        if (currentUser && !document.getElementById('sug-input-author').value) {
+          document.getElementById('sug-input-author').value = currentUser.login;
+        }
+
+        document.querySelectorAll('.sug-status-tab').forEach(btn => {
+          btn.className = (btn.dataset.status === sugFilterStatus)
+            ? 'sug-status-tab px-3 py-1.5 rounded-lg text-xs font-black uppercase bg-dp-ink text-white cursor-pointer'
+            : 'sug-status-tab px-3 py-1.5 rounded-lg text-xs font-bold uppercase bg-white text-neutral-700 hover:bg-neutral-200 cursor-pointer';
+        });
+
+        // Обычные пользователи видят только approved = true; стафф видит все
+        const baseList = staffCanManage ? suggestionsList : suggestionsList.filter(s => s.approved);
+        const filtered = baseList.filter(s => sugFilterStatus === 'ALL' || s.status === sugFilterStatus);
+
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50/70 p-12 text-center">
+              <h3 class="font-display font-black text-xl uppercase text-dp-ink mb-2">
+                Одобренных предложений пока нет
+              </h3>
+              <p class="text-sm text-neutral-600 max-w-md mx-auto">
+                Отправьте свою идею слева — после проверки модератором она появится здесь.
+              </p>
+            </div>`;
+          return;
+        }
+
+        const statusLabels = {
+          unprocessed: { text: 'Не обработано', cls: 'bg-neutral-200 text-neutral-800' },
+          planned: { text: 'Будет сделано', cls: 'bg-dp-amber text-dp-ink' },
+          done: { text: 'Сделано', cls: 'bg-emerald-500 text-white' }
+        };
+
+        container.innerHTML = filtered.map(item => {
+          const st = statusLabels[item.status] || statusLabels.unprocessed;
+          const hasBadWords = detectForbiddenContent(`${item.author_name} ${item.title} ${item.description}`);
+
+          return `
+            <div class="rounded-2xl border-2 ${!item.approved ? 'border-dp-pink bg-rose-50/30' : 'border-neutral-900 bg-white'} p-5 sm:p-6 shadow-[5px_5px_0px_#141414] space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="px-3 py-1 rounded-md font-display font-black text-[11px] uppercase ${st.cls}">
+                    ${st.text}
+                  </span>
+                  ${!item.approved ? `
+                    <span class="px-2.5 py-1 rounded-md bg-dp-pink text-white font-display font-black text-[10px] uppercase">
+                      ⏳ Скрыто (на премодерации)
+                    </span>
+                  ` : ''}
+                  ${staffCanManage && hasBadWords ? `
+                    <span class="px-2.5 py-1 rounded-md bg-red-700 text-white font-display font-black text-[10px] uppercase">
+                      ⚠ Обнаружены запрещённые слова / ссылки
+                    </span>
+                  ` : ''}
+                </div>
+                <span class="text-xs text-neutral-500 font-bold">от ${esc(item.author_name)} • ${new Date(item.created_at).toLocaleDateString('ru-RU')}</span>
+              </div>
+
+              <div>
+                <h3 class="font-display font-black text-lg uppercase text-dp-ink">${esc(item.title)}</h3>
+                <p class="text-sm text-neutral-700 mt-1.5 whitespace-pre-line leading-relaxed">${esc(item.description)}</p>
+              </div>
+
+              ${item.staff_reply ? `
+                <div class="rounded-xl bg-[#161616] text-white p-4 border-l-4 border-dp-amber">
+                  <div class="text-[11px] text-dp-amber font-black uppercase mb-1">
+                    Ответ команды (${esc(item.replied_by || 'Staff')})
+                  </div>
+                  <p class="text-xs sm:text-sm text-neutral-200 leading-relaxed">${esc(item.staff_reply)}</p>
+                </div>
+              ` : ''}
+
+              ${staffCanManage ? `
+                <div class="pt-4 border-t border-neutral-200 space-y-3 bg-neutral-100/80 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-5 sm:p-6 rounded-b-2xl">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      ${!item.approved ? `
+                        <button type="button" data-action="approve-suggestion" data-id="${item.id}"
+                          class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-display font-black text-[11px] uppercase cursor-pointer">
+                          ✓ Одобрить публикацию
+                        </button>
+                      ` : ''}
+                      ${['unprocessed', 'planned', 'done'].map(code => `
+                        <button type="button" data-action="change-sug-status" data-id="${item.id}" data-status="${code}"
+                          class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border ${item.status === code ? 'bg-dp-ink text-white border-dp-ink' : 'bg-white text-neutral-700 border-neutral-300'} cursor-pointer">
+                          ${statusLabels[code].text}
+                        </button>
+                      `).join('')}
+                    </div>
+
+                    <button type="button" data-action="delete-suggestion" data-id="${item.id}"
+                      class="px-3 py-1.5 rounded-lg bg-dp-pink hover:brightness-110 text-white font-display font-black text-[11px] uppercase cursor-pointer">
+                      🗑 Удалить
+                    </button>
+                  </div>
+
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="sug-reply-field-${item.id}" value="${esc(item.staff_reply || '')}"
+                      placeholder="Введите ответ команды..."
+                      class="flex-1 px-3 py-2 rounded-xl border-2 border-neutral-300 bg-white text-xs font-medium focus:border-dp-ink focus:outline-none" />
+                    <button type="button" data-action="save-sug-reply" data-id="${item.id}"
+                      class="px-4 py-2 rounded-xl bg-dp-ink hover:bg-neutral-800 text-white font-display font-black text-[11px] uppercase cursor-pointer">
+                      Сохранить ответ
+                    </button>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      async function handleSuggestionFormSubmit(e) {
+        e.preventDefault();
+        if (!sb) { notify('Supabase не подключен.', true); return; }
+
+        const authorName = document.getElementById('sug-input-author').value.trim();
+        const title = document.getElementById('sug-input-title').value.trim();
+        const description = document.getElementById('sug-input-desc').value.trim();
+
+        if (detectForbiddenContent(`${authorName} ${title} ${description}`)) {
+          notify('Текст содержит запрещённые слова или ссылки. Удалите их перед отправкой!', true);
+          return;
+        }
+
+        const { error } = await sb.from('suggestions').insert({
+          author_name: authorName,
+          title,
+          description,
+          status: 'unprocessed',
+          approved: false
+        });
+
+        if (error) {
+          notify('Ошибка отправки предложения: ' + error.message, true);
+          return;
+        }
+
+        document.getElementById('suggestion-submit-form').reset();
+        await loadAllData();
+        notify('Предложение отправлено на проверку модераторам!');
+      }
+
+      // ==================== ЗАКРЫТАЯ ПАНЕЛЬ СТАФФА И ВЛАДЕЛЬЦА ====================
+      function renderModerationTab() {
+        const root = document.getElementById('moderation-panel-root');
+        if (!isStaff()) {
+          root.innerHTML = '';
+          return;
+        }
+
+        const pendingSetups = driftSetups.filter(s => s.status === 'pending');
+        const unapprovedSugs = suggestionsList.filter(s => !s.approved);
+        const ownerOnly = isOwner();
+
+        root.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b-2 border-neutral-200 pb-4 mb-8">
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" data-action="switch-mod-subtab" data-subtab="setups"
+                class="px-4 py-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider ${modSubtab === 'setups' ? 'bg-dp-ink text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'} cursor-pointer">
+                Настройки (${pendingSetups.length})
+              </button>
+              <button type="button" data-action="switch-mod-subtab" data-subtab="suggestions"
+                class="px-4 py-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider ${modSubtab === 'suggestions' ? 'bg-dp-ink text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'} cursor-pointer">
+                Предложения (${unapprovedSugs.length})
+              </button>
+              ${ownerOnly ? `
+                <button type="button" data-action="switch-mod-subtab" data-subtab="security"
+                  class="px-4 py-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider ${modSubtab === 'security' ? 'bg-dp-amber text-dp-ink border-2 border-neutral-900' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'} cursor-pointer">
+                  🛡 Безопасность и игроки (Owner)
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <div id="mod-subtab-content" class="space-y-6"></div>
+        `;
+
+        const content = document.getElementById('mod-subtab-content');
+
+        if (modSubtab === 'security' && ownerOnly) {
+          renderOwnerSecurityConsole(content);
+          return;
+        }
+
+        if (modSubtab === 'suggestions') {
+          if (suggestionsList.length === 0) {
+            content.innerHTML = `<div class="rounded-2xl border-2 border-dashed border-neutral-300 p-12 text-center font-display font-black uppercase text-neutral-600">Предложений пока нет</div>`;
+            return;
+          }
+          content.innerHTML = suggestionsList.map(item => `
+            <div class="rounded-2xl border-2 border-neutral-900 bg-white p-5 shadow-[5px_5px_0px_#141414] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded text-[10px] font-black uppercase ${item.approved ? 'bg-emerald-500 text-white' : 'bg-dp-pink text-white'}">
+                    ${item.approved ? 'Опубликовано' : 'Ожидает одобрения'}
+                  </span>
+                  <span class="text-xs font-bold text-neutral-500">Автор: ${esc(item.author_name)}</span>
+                </div>
+                <h3 class="font-display font-black text-base uppercase text-dp-ink">${esc(item.title)}</h3>
+                <p class="text-xs text-neutral-700">${esc(item.description)}</p>
+              </div>
+              <div class="flex flex-wrap gap-2 shrink-0">
+                ${!item.approved ? `
+                  <button type="button" data-action="approve-suggestion" data-id="${item.id}"
+                    class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-black text-xs uppercase cursor-pointer">
+                    ✓ Одобрить
+                  </button>
+                ` : ''}
+                <button type="button" data-action="delete-suggestion" data-id="${item.id}"
+                  class="px-4 py-2 rounded-xl bg-dp-pink hover:brightness-110 text-white font-display font-black text-xs uppercase cursor-pointer">
+                  🗑 Удалить
+                </button>
+              </div>
+            </div>
+          `).join('');
+          return;
+        }
+
+        // Очередь настроек
+        if (pendingSetups.length === 0) {
+          content.innerHTML = `
+            <div class="rounded-2xl border-2 border-dashed border-neutral-300 p-12 text-center">
+              <p class="font-display font-black text-xl uppercase text-neutral-700">Очередь настроек на проверку пуста</p>
+            </div>`;
+          return;
+        }
+
+        content.innerHTML = pendingSetups.map(item => `
+          <div class="rounded-2xl border-2 border-neutral-900 bg-white overflow-hidden shadow-[6px_6px_0px_#141414]">
+            <div class="bg-neutral-100 px-6 py-3.5 border-b-2 border-neutral-900 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="px-3 py-1 rounded bg-dp-amber text-dp-ink font-display font-black text-xs uppercase">⏳ На проверке</span>
+                <span class="font-display font-black text-sm uppercase text-dp-ink">${esc(item.car_name)}</span>
+                <span class="text-xs text-neutral-500 font-bold">от ${esc(item.author_name)}</span>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded bg-white border border-neutral-300">${esc(item.style)}</span>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="lg:col-span-5">
+                <div class="relative rounded-xl overflow-hidden border-2 border-neutral-900 bg-neutral-900 cursor-zoom-in" data-action="open-lightbox" data-id="${item.id}">
+                  <img src="${esc(item.screenshot_url)}" alt="Скриншот" class="w-full h-56 object-cover" />
+                </div>
+              </div>
+              <div class="lg:col-span-7 flex flex-col justify-between space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+                  ${DRIFT_PARAMETERS.map(spec => `
+                    <div class="p-2 rounded-lg bg-neutral-900 text-white">
+                      <div class="text-[9px] opacity-75 leading-tight">${esc(spec.label)}</div>
+                      <div class="font-display font-black text-xs text-dp-amber mt-0.5">${item.params ? item.params[spec.key] : '-'}</div>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="flex flex-wrap gap-3 pt-3 border-t border-neutral-200">
+                  <button type="button" data-action="approve-setup-item" data-id="${item.id}"
+                    class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-black text-xs uppercase cursor-pointer">
+                    ✔ ОДОБРИТЬ И ОПУБЛИКОВАТЬ
+                  </button>
+                  <button type="button" data-action="delete-setup-item" data-id="${item.id}"
+                    class="px-5 py-3 rounded-xl bg-dp-pink hover:brightness-110 text-white font-display font-black text-xs uppercase cursor-pointer">
+                    🗑 ОТКЛОНИТЬ И УДАЛИТЬ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // ==================== КОНФИДЕНЦИАЛЬНАЯ КОНСОЛЬ ВЛАДЕЛЬЦА (ТОЛЬКО ROLE = 'owner') ====================
+      function renderOwnerSecurityConsole(container) {
+        if (!isOwner()) {
+          container.innerHTML = '';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="space-y-8">
+            <div class="p-4 rounded-2xl bg-neutral-900 text-white border-2 border-dp-amber flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span class="text-[10px] font-black uppercase text-dp-amber tracking-widest">СТРОГО КОНФИДЕНЦИАЛЬНО • OWNER ONLY</span>
+                <h2 class="font-display font-black text-lg uppercase mt-0.5">Управление аккаунтами и журнал безопасности</h2>
+              </div>
+              <button type="button" data-action="rebind-own-2fa"
+                class="px-4 py-2 rounded-xl bg-dp-amber text-dp-ink font-display font-black text-xs uppercase cursor-pointer">
+                🔐 Перепривязать мой 2FA
+              </button>
+            </div>
+
+            <!-- Реестр зарегистрированных игроков и персонала -->
+            <div class="rounded-2xl border-2 border-neutral-900 bg-white p-6 shadow-[6px_6px_0px_#141414] space-y-4">
+              <div class="flex items-center justify-between border-b-2 border-neutral-900 pb-3">
+                <h3 class="font-display font-black text-base uppercase">Реестр аккаунтов (${allProfilesList.length})</h3>
+                <span class="text-xs text-neutral-500 font-semibold">Смена логина, код сброса пароля и удаление</span>
+              </div>
+
+              <div class="space-y-3">
+                ${allProfilesList.map(prof => {
+                  const isSelf = prof.id === currentUser.id;
+                  return `
+                    <div class="rounded-xl border-2 border-neutral-200 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-neutral-50">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="font-display font-black text-sm text-dp-ink">${esc(prof.login || prof.nickname)}</span>
+                          <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase ${prof.role === 'owner' ? 'bg-dp-amber text-dp-ink' : 'bg-neutral-800 text-white'}">
+                            ${esc(prof.role)}
+                          </span>
+                          ${prof.totp_enabled ? '<span class="text-[10px] font-black text-emerald-600">2FA ON</span>' : ''}
+                        </div>
+                        <div class="text-[11px] text-neutral-500 mt-0.5">
+                          Регистрация: ${new Date(prof.created_at).toLocaleString('ru-RU')}
+                          ${prof.reset_code ? ` • Активный код сброса: <code class="px-1.5 py-0.5 rounded bg-dp-amber text-dp-ink font-bold">${esc(prof.reset_code)}</code>` : ''}
+                        </div>
+                      </div>
+
+                      ${!isSelf ? `
+                        <div class="flex flex-wrap items-center gap-2">
+                          <div class="flex items-center gap-1">
+                            <input type="text" id="new-login-input-${prof.id}" placeholder="Новый логин"
+                              class="w-32 px-2.5 py-1.5 rounded-lg border border-neutral-300 bg-white text-xs font-bold" />
+                            <button type="button" data-action="owner-change-login" data-id="${prof.id}"
+                              class="px-3 py-1.5 rounded-lg bg-dp-ink text-white font-display font-black text-[10px] uppercase cursor-pointer">
+                              Сменить логин
+                            </button>
+                          </div>
+
+                          <select data-action="owner-change-role" data-id="${prof.id}"
+                            class="px-2.5 py-1.5 rounded-lg border border-neutral-300 bg-white text-xs font-bold">
+                            <option value="player" ${prof.role === 'player' ? 'selected' : ''}>player</option>
+                            <option value="wiki_editor" ${prof.role === 'wiki_editor' ? 'selected' : ''}>wiki_editor</option>
+                            <option value="moderator" ${prof.role === 'moderator' ? 'selected' : ''}>moderator</option>
+                            <option value="admin" ${prof.role === 'admin' ? 'selected' : ''}>admin</option>
+                          </select>
+
+                          <button type="button" data-action="owner-gen-reset" data-id="${prof.id}"
+                            class="px-3 py-1.5 rounded-lg bg-dp-amber text-dp-ink font-display font-black text-[10px] uppercase cursor-pointer">
+                            🔑 Код сброса
+                          </button>
+
+                          <button type="button" data-action="owner-delete-account" data-id="${prof.id}" data-login="${esc(prof.login || prof.nickname)}"
+                            class="px-3 py-1.5 rounded-lg bg-dp-pink text-white font-display font-black text-[10px] uppercase cursor-pointer">
+                            🗑 Удалить аккаунт
+                          </button>
+                        </div>
+                      ` : '<span class="text-xs font-black text-emerald-700 uppercase">Ваш аккаунт владельца</span>'}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Журнал входов (Audit Log) -->
+            <div class="rounded-2xl border-2 border-neutral-900 bg-white p-6 shadow-[6px_6px_0px_#141414] space-y-4">
+              <div class="flex items-center justify-between border-b-2 border-neutral-900 pb-3">
+                <h3 class="font-display font-black text-base uppercase">Журнал входов (Audit Log)</h3>
+                <span class="text-xs text-neutral-500 font-semibold">Последние 100 событий</span>
+              </div>
+
+              ${auditLogsList.length === 0
+                ? '<p class="text-xs text-neutral-500">Записей в журнале пока нет.</p>'
+                : `<div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr class="border-b-2 border-neutral-900 text-[10px] font-black uppercase text-neutral-500">
+                          <th class="py-2 pr-3">Время</th>
+                          <th class="py-2 pr-3">Логин / Роль</th>
+                          <th class="py-2 pr-3">Событие</th>
+                          <th class="py-2 pr-3">Сеть / Регион</th>
+                          <th class="py-2 pr-3">Часовой пояс</th>
+                          <th class="py-2">Устройство / Браузер</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-neutral-200">
+                        ${auditLogsList.map(log => `
+                          <tr>
+                            <td class="py-2.5 pr-3 whitespace-nowrap font-semibold">${new Date(log.created_at).toLocaleString('ru-RU')}</td>
+                            <td class="py-2.5 pr-3 whitespace-nowrap">
+                              <strong class="text-dp-ink">${esc(log.nickname)}</strong>
+                              <span class="ml-1 px-1.5 py-0.5 rounded bg-neutral-200 text-[9px] font-black uppercase">${esc(log.role)}</span>
+                            </td>
+                            <td class="py-2.5 pr-3 whitespace-nowrap font-mono text-[11px]">${esc(log.event_type)}</td>
+                            <td class="py-2.5 pr-3 whitespace-nowrap font-semibold text-neutral-700">${esc(log.net_meta || '-')}</td>
+                            <td class="py-2.5 pr-3 whitespace-nowrap text-neutral-600">${esc(log.timezone || '-')}</td>
+                            <td class="py-2.5 text-neutral-500 max-w-xs truncate">${esc(log.device_info || '-')}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>`
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      // ==================== LIGHTBOX ====================
+      function openLightbox(setupId) {
+        const s = driftSetups.find(item => String(item.id) === String(setupId));
+        if (!s) return;
+        document.getElementById('lightbox-image').src = s.screenshot_url;
+        document.getElementById('lightbox-title').textContent = `${s.car_name} (${s.style}) — Автор: ${s.author_name}`;
+        const overlay = document.getElementById('lightbox-overlay');
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
+      }
+
+      function closeLightbox() {
+        const overlay = document.getElementById('lightbox-overlay');
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+      }
+
+      // ==================== ГЛОБАЛЬНОЕ ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ====================
+      document.addEventListener('click', async function(e) {
+        if (e.target.closest('[data-stop-prop="true"]') && !e.target.closest('[data-action]')) return;
+
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+
+        if (action === 'switch-tab') {
+          if (btn.tagName === 'A') e.preventDefault();
+          switchTab(btn.dataset.tab);
+        } else if (action === 'open-player-auth') {
+          openPlayerAuthModal('login');
+        } else if (action === 'close-player-auth') {
+          closePlayerAuthModal();
+        } else if (action === 'player-auth-tab') {
+          switchPlayerAuthTab(btn.dataset.mode);
+        } else if (action === 'open-staff-auth') {
+          openStaffAuthModal();
+        } else if (action === 'close-staff-auth') {
+          closeStaffAuthModal();
+        } else if (action === 'global-logout') {
+          await handleGlobalLogout();
+        } else if (action === 'trigger-home-upload') {
+          const slot = btn.dataset.slot;
+          document.getElementById('home-upload-' + slot)?.click();
+        } else if (action === 'open-caption-modal') {
+          openHomeCaptionModal(Number(btn.dataset.slot));
+        } else if (action === 'close-caption-modal') {
+          closeHomeCaptionModal();
+        } else if (action === 'reset-home-slot') {
+          await resetHomeSlot(Number(btn.dataset.slot));
+        } else if (action === 'open-setup-modal') {
+          openSetupSubmitModal();
+        } else if (action === 'close-setup-modal') {
+          closeSetupSubmitModal();
+        } else if (action === 'copy-setup-params') {
+          copySetupToClipboard(id);
+        } else if (action === 'open-lightbox') {
+          openLightbox(id);
+        } else if (action === 'close-lightbox') {
+          closeLightbox();
+        } else if (action === 'open-wiki-create') {
+          openWikiEditor('');
+        } else if (action === 'open-wiki-edit') {
+          openWikiEditor(id);
+        } else if (action === 'close-wiki-editor') {
+          closeWikiEditor();
+        } else if (action === 'delete-wiki-article') {
+          if (!canEditWiki() || !sb) return;
+          await sb.from('wiki_articles').delete().eq('id', id);
+          await loadAllData();
+          notify('Статья удалена из Wiki.');
+        } else if (action === 'filter-sug') {
+          sugFilterStatus = btn.dataset.status;
+          renderSuggestionsTab();
+        } else if (action === 'approve-suggestion') {
+          if (!canModerate() || !sb) return;
+          await sb.from('suggestions').update({ approved: true }).eq('id', id);
+          await loadAllData();
+          notify('Предложение одобрено и опубликовано!');
+        } else if (action === 'delete-suggestion') {
+          if (!canModerate() || !sb) return;
+          await sb.from('suggestions').delete().eq('id', id);
+          await loadAllData();
+          notify('Предложение удалено.');
+        } else if (action === 'change-sug-status') {
+          if (!canModerate() || !sb) return;
+          await sb.from('suggestions').update({ status: btn.dataset.status }).eq('id', id);
+          await loadAllData();
+          notify('Статус предложения обновлён.');
+        } else if (action === 'save-sug-reply') {
+          if (!canModerate() || !sb) return;
+          const inp = document.getElementById('sug-reply-field-' + id);
+          if (!inp) return;
+          await sb.from('suggestions').update({
+            staff_reply: inp.value.trim(),
+            replied_by: currentUser.login,
+            approved: true
+          }).eq('id', id);
+          await loadAllData();
+          notify('Ответ сохранён и опубликован.');
+        } else if (action === 'switch-mod-subtab') {
+          modSubtab = btn.dataset.subtab;
+          renderModerationTab();
+        } else if (action === 'approve-setup-item') {
+          if (!canModerate() || !sb) return;
+          await sb.from('drift_setups').update({ status: 'approved' }).eq('id', id);
+          await loadAllData();
+          notify('Настройка одобрена и опубликована!');
+        } else if (action === 'delete-setup-item') {
+          if (!canModerate() || !sb) return;
+          await sb.from('drift_setups').delete().eq('id', id);
+          await loadAllData();
+          notify('Настройка отклонена и удалена.');
+        } else if (action === 'rebind-own-2fa') {
+          if (!isOwner()) return;
+          const secret = generateBase32Secret(16);
+          pending2FASession = {
+            userId: currentUser.id,
+            login: currentUser.login,
+            email: currentUser.email,
+            role: 'owner',
+            secret,
+            isFirstSetup: true
+          };
+          const modal = document.getElementById('staff-auth-modal');
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          renderTwoFactorQRScreen(pending2FASession);
+        } else if (action === 'owner-change-login') {
+          if (!isOwner() || !sb) return;
+          const inp = document.getElementById('new-login-input-' + id);
+          const newLogin = normalizeLogin(inp ? inp.value : '');
+          if (!isValidLogin(newLogin)) {
+            notify('Новый логин должен содержать 3–24 символа (a-z, 0-9, _).', true);
+            return;
+          }
+          const { error } = await sb.rpc('owner_change_user_login', {
+            target_user_id: id,
+            new_login: newLogin
+          });
+          if (error) {
+            notify('Ошибка смены логина: ' + error.message, true);
+            return;
+          }
+          await loadAllData();
+          notify(`Логин игрока изменён на ${newLogin}!`);
+        } else if (action === 'owner-gen-reset') {
+          if (!isOwner() || !sb) return;
+          const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+          const expires = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+          const { error } = await sb.from('profiles').update({
+            reset_code: code,
+            reset_expires: expires
+          }).eq('id', id);
+          if (error) {
+            notify('Ошибка генерации кода: ' + error.message, true);
+            return;
+          }
+          await loadAllData();
+          notify(`Код сброса ${code} создан (действует 30 мин).`);
+        } else if (action === 'owner-delete-account') {
+          if (!isOwner() || !sb) return;
+          const { error } = await sb.rpc('owner_delete_user', { target_user_id: id });
+          if (error) {
+            notify('Ошибка удаления аккаунта: ' + error.message, true);
+            return;
+          }
+          await loadAllData();
+          notify(`Аккаунт ${btn.dataset.login || ''} полностью удалён.`);
+        }
+      });
+
+      document.addEventListener('input', function(e) {
+        const paramKey = e.target.dataset.syncParam;
+        if (paramKey) {
+          const rangeEl = document.getElementById('param-range-' + paramKey);
+          const numEl = document.getElementById('param-num-' + paramKey);
+          if (e.target === rangeEl && numEl) numEl.value = rangeEl.value;
+          else if (e.target === numEl && rangeEl && numEl.value !== '') rangeEl.value = numEl.value;
+          return;
+        }
+        if (e.target.id === 'wiki-search-input') renderWikiTab(e.target.value);
+        if (e.target.id === 'setup-search-input') renderSetupsTab();
+        if (e.target.id === 'setup-url-input') {
+          const url = e.target.value.trim();
+          if (url && !pendingScreenshotDataUrl) {
+            document.getElementById('setup-screenshot-preview').src = url;
+            document.getElementById('setup-screenshot-caption').textContent = 'Предпросмотр по внешней ссылке';
+            document.getElementById('setup-screenshot-preview-wrap').classList.remove('hidden');
+          }
+        }
+      });
+
+      document.addEventListener('change', async function(e) {
+        if (e.target.id === 'setup-style-filter') renderSetupsTab();
+        if (e.target.id === 'setup-file-input' && e.target.files?.[0]) {
+          processScreenshotUpload(e.target.files[0]);
+        }
+        if (e.target.id === 'home-upload-1' && e.target.files?.[0]) {
+          processHomeImageUpload(1, e.target.files[0]);
+          e.target.value = '';
+        }
+        if (e.target.id === 'home-upload-2' && e.target.files?.[0]) {
+          processHomeImageUpload(2, e.target.files[0]);
+          e.target.value = '';
+        }
+        if (e.target.dataset.action === 'owner-change-role') {
+          if (!isOwner() || !sb) return;
+          const targetId = e.target.dataset.id;
+          const newRole = e.target.value;
+          await sb.from('profiles').update({ role: newRole }).eq('id', targetId);
+          await loadAllData();
+          notify(`Роль обновлена: ${newRole}`);
+        }
+      });
+
+      document.addEventListener('submit', function(e) {
+        if (e.target.id === 'player-login-form') handlePlayerLogin(e);
+        if (e.target.id === 'player-register-form') handlePlayerRegister(e);
+        if (e.target.id === 'player-reset-form') handlePlayerPasswordReset(e);
+        if (e.target.id === 'owner-bootstrap-form') handleOwnerBootstrap(e);
+        if (e.target.id === 'staff-signin-form') handleStaffSigninStep1(e);
+        if (e.target.id === 'verify-2fa-code-form') handleVerify2FACode(e);
+        if (e.target.id === 'setup-submit-form') handleSetupFormSubmit(e);
+        if (e.target.id === 'suggestion-submit-form') handleSuggestionFormSubmit(e);
+        if (e.target.id === 'wiki-editor-form') handleWikiEditorSubmit(e);
+        if (e.target.id === 'home-caption-form') handleHomeCaptionSave(e);
+      });
+
+      // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+      window.addEventListener('DOMContentLoaded', async function() {
+        switchTab('home');
+        await restoreAuthSession();
+        await loadAllData();
+        setupRealtimeSubscriptions();
+      });
+    })();
+  </script>
+</body>
+</html>
